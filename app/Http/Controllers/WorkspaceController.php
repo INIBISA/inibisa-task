@@ -29,9 +29,10 @@ class WorkspaceController extends Controller
     {
         $query = Task::with(['product', 'milestone', 'assignees', 'subtasks'])->latest();
         if ($request->filled('status')) $query->where('status', $request->status);
-        if ($request->filled('product')) $query->where('product_id', $request->product);
+        if ($request->product === 'none') $query->whereNull('product_id');
+        elseif ($request->filled('product')) $query->where('product_id', $request->product);
         if ($request->filled('q')) $query->where('title', 'like', '%'.$request->q.'%');
-        return view('workspace.tasks', ['tasks' => $query->get(), 'products' => Product::orderBy('name')->get(), 'members' => User::orderBy('name')->get(), 'milestones' => Milestone::orderBy('name')->get()]);
+        return view('workspace.tasks', ['tasks' => $query->get(), 'products' => Product::where('status', 'active')->orderBy('name')->get(), 'members' => User::orderBy('name')->get(), 'milestones' => Milestone::orderBy('name')->get()]);
     }
 
     public function storeTask(Request $request)
@@ -61,6 +62,10 @@ class WorkspaceController extends Controller
     public function audiences() { return view('workspace.audiences', ['audiences'=>Audience::withCount('products')->orderBy('position')->get()]); }
     public function storeAudience(Request $request) { $data=$request->validate(['name'=>'required|max:100','description'=>'nullable','icon'=>'nullable|max:10']); Audience::create($data+['slug'=>Str::slug($data['name']),'position'=>Audience::max('position')+1]); return back()->with('success','Audience ditambahkan.'); }
     public function team() { return view('workspace.team', ['members'=>User::with(['assignedTasks.product'])->withCount('assignedTasks')->get()]); }
+    public function storeMember(Request $request) { $this->admin($request); $data = $request->validate(['name'=>'required|string|max:255','email'=>'required|email|max:255|unique:users,email','role'=>'required|in:admin,member','position'=>'nullable|string|max:255','password'=>'required|string|min:8|confirmed']); User::create($data); return back()->with('success', 'Member ditambahkan.'); }
+    public function updateMember(Request $request, User $user) { $this->admin($request); $data = $request->validate(['name'=>'required|string|max:255','email'=>'required|email|max:255|unique:users,email,'.$user->id,'role'=>'required|in:admin,member','position'=>'nullable|string|max:255','password'=>'nullable|string|min:8|confirmed']); if (blank($data['password'])) unset($data['password']); $user->update($data); return back()->with('success', 'Member diperbarui.'); }
+    public function deactivateMember(Request $request, User $user) { $this->admin($request); abort_if($user->is($request->user()), 422, 'Tidak dapat menonaktifkan akun sendiri.'); $user->update(['is_active'=>false]); return back()->with('success', 'Member dinonaktifkan.'); }
     public function activityIndex() { return view('workspace.activity', ['activities'=>Activity::with('user')->latest()->paginate(30)]); }
     public function activity(Request $request, string $action, $subject): void { Activity::create(['user_id'=>$request->user()->id,'action'=>$action,'subject_type'=>$subject::class,'subject_id'=>$subject->id]); }
+    private function admin(Request $request): void { abort_unless($request->user()->role === 'admin', 403); }
 }

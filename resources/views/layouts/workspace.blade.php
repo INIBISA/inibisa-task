@@ -21,16 +21,12 @@
                     href="{{ route('tasks') }}">Tasks</a>
                 <a class="top-nav {{ request()->routeIs('products*') ? 'top-nav-active' : '' }}"
                     href="{{ route('products') }}">Products</a>
-                <a class="top-nav {{ request()->routeIs('pipeline') ? 'top-nav-active' : '' }}"
-                    href="{{ route('pipeline') }}">Pipeline</a>
                 <a class="top-nav {{ request()->routeIs('ideas*') ? 'top-nav-active' : '' }}"
                     href="{{ route('ideas') }}">Ideas</a>
                 <a class="top-nav {{ request()->routeIs('audiences*') ? 'top-nav-active' : '' }}"
                     href="{{ route('audiences') }}">Audiences</a>
                 <a class="top-nav {{ request()->routeIs('team') ? 'top-nav-active' : '' }}"
                     href="{{ route('team') }}">Team</a>
-                <a class="top-nav {{ request()->routeIs('activity') ? 'top-nav-active' : '' }}"
-                    href="{{ route('activity') }}">Activity</a>
             </nav>
             <div class="ml-auto flex items-center gap-3"><span
                     class="hidden rounded-full bg-lime-100 px-3 py-1 text-xs font-bold text-lime-800 xl:block">● Polling

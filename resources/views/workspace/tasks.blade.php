@@ -6,6 +6,13 @@
     <form class="flex flex-wrap gap-2"><input name="q" value="{{ request('q') }}" placeholder="Cari task" class="field"><select name="status" class="field"><option value="">Semua status</option>@foreach(['Backlog','Planned','In Progress','Review','Done'] as $status)<option @selected(request('status') === $status)>{{ $status }}</option>@endforeach</select><button class="rounded-xl bg-white px-4 text-sm font-bold ring-1 ring-slate-200">Filter</button></form>
     <button onclick="document.getElementById('task-form').showModal()" class="rounded-xl bg-lime-300 px-4 py-2 text-sm font-bold">+ Buat task</button>
 </div>
+<nav class="mb-5 flex max-w-full gap-2 overflow-x-auto border-b border-slate-200 pb-3" aria-label="Filter produk">
+    <a href="{{ route('tasks', request()->except('product')) }}" class="task-tab {{ !request()->filled('product') ? 'task-tab-active' : '' }}">Semua Task</a>
+    @foreach($products as $product)
+        <a href="{{ route('tasks', array_merge(request()->except('product'), ['product' => $product->id])) }}" class="task-tab {{ (string) request('product') === (string) $product->id ? 'task-tab-active' : '' }}">{{ $product->name }}</a>
+    @endforeach
+    <a href="{{ route('tasks', array_merge(request()->except('product'), ['product' => 'none'])) }}" class="task-tab {{ request('product') === 'none' ? 'task-tab-active' : '' }}">Tanpa Produk</a>
+</nav>
 <p class="mb-5 text-sm text-slate-500">Tarik pegangan <b>⠿</b> pada kartu ke kolom status lain.</p>
 
 <div class="overflow-x-auto pb-5"><div class="grid min-w-[1160px] grid-cols-5 gap-5">
