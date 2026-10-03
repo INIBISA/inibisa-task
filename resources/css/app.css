@@ -44,6 +44,26 @@
         color: #64748b;
         box-shadow: inset 0 0 0 1px #e2e8f0;
     }
+    .badge[data-priority="urgent"], .badge[data-priority="P0"] {
+        background-color: #ffe4e6 !important;
+        color: #be123c !important;
+        box-shadow: inset 0 0 0 1px #fecdd3;
+    }
+    .badge[data-priority="high"], .badge[data-priority="P1"] {
+        background-color: #fef3c7 !important;
+        color: #b45309 !important;
+        box-shadow: inset 0 0 0 1px #fde68a;
+    }
+    .badge[data-priority="normal"], .badge[data-priority="P2"] {
+        background-color: #e0f2fe !important;
+        color: #0369a1 !important;
+        box-shadow: inset 0 0 0 1px #bae6fd;
+    }
+    .badge[data-priority="low"], .badge[data-priority="P3"] {
+        background-color: #f1f5f9 !important;
+        color: #64748b !important;
+        box-shadow: inset 0 0 0 1px #e2e8f0;
+    }
     .modal {
         @apply w-full max-w-lg rounded-2xl border-0 bg-white p-6 shadow-2xl backdrop:bg-slate-900/50;
     }
