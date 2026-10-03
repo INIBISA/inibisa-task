@@ -18,7 +18,7 @@ class WorkspaceTest extends TestCase
         $product = Product::create(['name' => 'Test', 'slug' => 'test', 'stage' => 'Idea']);
 
         $this->actingAs($user)->post(route('tasks.store'), [
-            'title' => 'Ship MVP', 'product_id' => $product->id, 'priority' => 'P0', 'status' => 'Planned',
+            'title' => 'Ship MVP', 'product_id' => $product->id, 'priority' => 'urgent', 'status' => 'Planned',
         ])->assertRedirect();
 
         $this->assertDatabaseHas('tasks', ['title' => 'Ship MVP', 'created_by' => $user->id]);
