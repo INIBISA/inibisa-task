@@ -22,7 +22,15 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'position',
+        'avatar',
     ];
+
+    public function assignedTasks()
+    {
+        return $this->belongsToMany(Task::class, 'task_assignees');
+    }
 
     /**
      * The attributes that should be hidden for serialization.
