@@ -1,59 +1,133 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# IniBisa
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Internal product and task management workspace for the IniBisa team.
 
-## About Laravel
+IniBisa connects audience, product, task, idea, and team workload in one private web application. It answers: what is being built, who owns it, and what happens next.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Features
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- Internal authentication. Public registration disabled.
+- Audience and product management.
+- Product-scoped task board with search, status filter, priority, deadlines, assignees, and subtasks.
+- Drag tasks between workflow columns: Backlog, Planned, In Progress, Review, Done.
+- Priority badges: Mendesak, Tinggi, Normal, Rendah.
+- Idea inbox with idea-to-product conversion.
+- Team member CRUD for admins: create, edit, reset password, deactivate.
+- Product progress calculated from completed tasks.
+- Audit activities stored for future notification use.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Stack
 
-## Learning Laravel
+- PHP 8.2+
+- Laravel 12
+- MySQL 8+
+- Blade and Tailwind CSS
+- Vite
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## Requirements
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- PHP 8.2 or newer
+- Composer
+- Node.js 20 or newer
+- MySQL 8 or newer
 
-## Laravel Sponsors
+## Setup
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+1. Install dependencies.
 
-### Premium Partners
+```bash
+composer install
+npm install
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+2. Create the database.
 
-## Contributing
+```sql
+CREATE DATABASE inibisa CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+3. Configure `.env`.
 
-## Code of Conduct
+```env
+APP_NAME=IniBisa
+APP_URL=http://127.0.0.1:8000
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=inibisa
+DB_USERNAME=root
+DB_PASSWORD=
+```
 
-## Security Vulnerabilities
+4. Generate app key, migrate, and seed demo data.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+php artisan key:generate
+php artisan migrate --seed
+php artisan storage:link
+```
 
-## License
+5. Run the application.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+php artisan serve
+npm run dev
+```
+
+Open `http://127.0.0.1:8000`.
+
+## Demo Login
+
+```text
+Email: hael@inibisa.test
+Password: password
+```
+
+The seeded account is an admin. Use Team to create or deactivate members.
+
+## Commands
+
+```bash
+# Run tests
+php artisan test
+
+# Production frontend build
+npm run build
+
+# Apply new migrations
+php artisan migrate
+
+# Reset local database with demo data
+php artisan migrate:fresh --seed
+```
+
+## Workflow
+
+```text
+Audience -> Product -> Task -> Subtask
+Idea -> Approved -> Product
+```
+
+Task board workflow:
+
+```text
+Backlog -> Planned -> In Progress -> Review -> Done
+```
+
+Drag a task from its `⠿` handle to move it between columns.
+
+## Access Control
+
+- All workspace routes require authentication.
+- `admin`: manages team members.
+- `member`: works with products, tasks, and ideas.
+- Deactivated members cannot sign in. Their historic tasks and activity remain available.
+
+## Realtime
+
+The current version uses standard page updates. Laravel Reverb/Echo is intentionally not configured yet. Add it when concurrent realtime collaboration needs justify infrastructure.
+
+## Product Specification
+
+Full requirements: [`prd-inibisa-task-management.md`](prd-inibisa-task-management.md).
