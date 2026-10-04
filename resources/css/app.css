@@ -84,6 +84,28 @@
     .task-tab-active .task-tab-count {
         @apply bg-blue-100 text-blue-800;
     }
+    .task-card {
+        @apply cursor-grab select-none;
+        touch-action: manipulation;
+    }
+    .task-card:active {
+        @apply cursor-grabbing;
+    }
+    .task-card-chosen {
+        @apply shadow-lg ring-2 ring-cyan-300;
+    }
+    .task-card-ghost {
+        @apply bg-cyan-50 opacity-60 ring-2 ring-cyan-200;
+    }
+    .task-card-dragging {
+        @apply rotate-1 scale-[0.98] opacity-90 shadow-xl ring-2 ring-cyan-300;
+    }
+    .task-dropzone {
+        @apply rounded-lg transition;
+    }
+    .task-dropzone-active {
+        @apply bg-cyan-50/70 ring-2 ring-cyan-300 ring-offset-2;
+    }
     .card {
         @apply rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200/70;
     }
@@ -204,6 +226,7 @@
 .dark .top-nav-active { color: #e0f2fe !important; }
 .dark .task-tab-active { background-color: #123447 !important; border-color: #225a72 !important; color: #a5f3fc !important; }
 .dark .task-tab-active .task-tab-count { background-color: #1d4c5e !important; color: #a5f3fc !important; }
+.dark .task-dropzone-active { background-color: #123447 !important; }
 .dark .action-button { background-color: #1c2b36; border-color: #38505f; color: #d1dce5; }
 .dark .action-danger { color: #fda4af; }
 .dark .entity-card .card-actions { border-color: #2b3c48; }

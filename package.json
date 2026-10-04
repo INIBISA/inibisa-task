@@ -20,6 +20,7 @@
     },
     "dependencies": {
         "lucide": "^1.51.0",
+        "sortablejs": "^1.15.7",
         "sweetalert2": "^11.26.25"
     }
 }

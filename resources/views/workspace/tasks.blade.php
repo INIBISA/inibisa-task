@@ -25,17 +25,17 @@
         @foreach($statusLabels as $status => $label)
             <section class="rounded-lg border border-slate-200 bg-slate-50/70 p-3">
                 <div class="mb-3 flex items-center justify-between px-1"><h2 class="text-xs font-bold text-slate-700">{{ $label }}</h2><span class="task-tab-count">{{ $tasks->where('status', $status)->count() }}</span></div>
-                <div class="min-h-40 space-y-3" data-dropzone="{{ $status }}">
+                <div class="task-dropzone min-h-40 space-y-3" data-dropzone="{{ $status }}">
                     @forelse($tasks->where('status', $status) as $task)
                         @php($class = $priorityClass($task->priority))
-                        <article data-task-id="{{ $task->id }}" class="card relative p-4 transition hover:shadow-md">
-                            <button draggable="true" type="button" class="drag-handle absolute right-3 top-3 cursor-grab rounded-md px-1.5 py-1 text-slate-400 hover:bg-slate-100 active:cursor-grabbing" aria-label="Pindahkan tugas">⠿</button>
-                            <button type="button" onclick="document.getElementById('task-{{ $task->id }}').showModal()" class="block w-full text-left">
+                        <article data-task-id="{{ $task->id }}" data-update-url="{{ route('tasks.update', $task) }}" data-dialog-target="task-{{ $task->id }}" class="task-card card relative p-4 transition hover:shadow-md">
+                            <button type="button" class="drag-handle absolute right-3 top-3 cursor-grab rounded-md px-1.5 py-1 text-slate-400 hover:bg-slate-100 active:cursor-grabbing" aria-label="Pindahkan tugas">⠿</button>
+                            <div class="block w-full text-left">
                                 <div class="mb-3 flex items-center gap-2 pr-7"><span class="badge priority-{{ $class }}" data-priority="{{ $task->priority }}">{{ $priorities[$task->priority] ?? $task->priority }}</span>@if($task->is_blocked)<span class="text-xs font-bold text-rose-600">Terblokir</span>@endif</div>
                                 <p class="pr-2 text-sm font-bold leading-5 text-slate-800">{{ $task->title }}</p>
                                 <p class="mt-1.5 truncate text-xs text-slate-500">{{ $task->product?->name ?? 'Tanpa produk' }}</p>
                                 <div class="mt-4 flex items-center justify-between gap-2 border-t border-slate-100 pt-3 text-xs text-slate-500"><span class="truncate">{{ $task->assignees->pluck('name')->join(', ') ?: 'Belum ditugaskan' }}</span><span class="shrink-0">{{ $task->due_date?->format('d M') ?? 'Tanpa tanggal' }}</span></div>
-                            </button>
+                            </div>
                         </article>
                         <dialog id="task-{{ $task->id }}" class="modal"><div class="space-y-5">
                             <div class="flex items-start justify-between gap-4"><div><div class="mb-2 flex gap-2"><span class="badge">{{ $statusLabels[$task->status] ?? $task->status }}</span><span class="badge priority-{{ $class }}" data-priority="{{ $task->priority }}">{{ $priorities[$task->priority] ?? $task->priority }}</span></div><h2 class="text-xl font-black leading-tight">{{ $task->title }}</h2></div><button type="button" onclick="this.closest('dialog').close()" class="modal-close" aria-label="Tutup">×</button></div>
@@ -71,22 +71,4 @@
         <p class="label">Tugaskan ke</p><x-assignee-picker :members="$members" />
         <button class="brand-button-dark">Buat tugas</button>
     </form></dialog>
-    <script>
-        const token = document.querySelector('meta[name="csrf-token"]').content;
-        let dragged;
-        document.querySelectorAll('.drag-handle').forEach(handle => {
-            handle.addEventListener('dragstart', () => { dragged = handle.closest('[data-task-id]'); dragged.classList.add('opacity-40'); });
-            handle.addEventListener('dragend', () => dragged?.classList.remove('opacity-40'));
-        });
-        document.querySelectorAll('[data-dropzone]').forEach(zone => {
-            zone.addEventListener('dragover', event => { event.preventDefault(); zone.classList.add('ring-2', 'ring-cyan-300'); });
-            zone.addEventListener('dragleave', () => zone.classList.remove('ring-2', 'ring-cyan-300'));
-            zone.addEventListener('drop', async event => {
-                event.preventDefault(); zone.classList.remove('ring-2', 'ring-cyan-300');
-                if (!dragged) return;
-                const response = await fetch(`/tasks/${dragged.dataset.taskId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': token }, body: JSON.stringify({ status: zone.dataset.dropzone }) });
-                if (response.ok) location.reload();
-            });
-        });
-    </script>
 </x-workspace>
