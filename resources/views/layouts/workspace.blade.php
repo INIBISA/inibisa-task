@@ -25,6 +25,8 @@
                     href="{{ route('ideas') }}">Ide</a>
                 <a class="top-nav {{ request()->routeIs('audiences*') ? 'top-nav-active' : '' }}"
                     href="{{ route('audiences') }}">Audiens</a>
+                <a class="top-nav {{ request()->routeIs('social-media-accounts*') ? 'top-nav-active' : '' }}"
+                    href="{{ route('social-media-accounts') }}">Sosial Media</a>
                 <a class="top-nav {{ request()->routeIs('team') ? 'top-nav-active' : '' }}"
                     href="{{ route('team') }}">Tim</a>
             </nav>
@@ -57,7 +59,6 @@
     <main>
         <div class="flex items-center justify-between px-5 pt-6 xl:px-9">
             <div>
-                <p class="text-xs font-bold uppercase tracking-widest text-blue-700">IniBisa workspace</p>
                 <h1 class="text-2xl font-black">{{ $heading ?? 'Dasbor' }}</h1>
             </div>
         </div>

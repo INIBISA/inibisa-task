@@ -31,6 +31,11 @@ Route::middleware('auth')->group(function () {
     Route::put('/audiences/{audience}', [WorkspaceController::class, 'updateAudience'])->name('audiences.update');
     Route::patch('/audiences/{audience}/archive', [WorkspaceController::class, 'archiveAudience'])->name('audiences.archive');
     Route::delete('/audiences/{audience}', [WorkspaceController::class, 'destroyAudience'])->name('audiences.destroy');
+    Route::get('/social-media-accounts', [WorkspaceController::class, 'socialMediaAccounts'])->name('social-media-accounts');
+    Route::post('/social-media-accounts', [WorkspaceController::class, 'storeSocialMediaAccount'])->name('social-media-accounts.store');
+    Route::put('/social-media-accounts/{socialMediaAccount}', [WorkspaceController::class, 'updateSocialMediaAccount'])->name('social-media-accounts.update');
+    Route::patch('/social-media-accounts/{socialMediaAccount}/deactivate', [WorkspaceController::class, 'deactivateSocialMediaAccount'])->name('social-media-accounts.deactivate');
+    Route::delete('/social-media-accounts/{socialMediaAccount}', [WorkspaceController::class, 'destroySocialMediaAccount'])->name('social-media-accounts.destroy');
     Route::get('/team', [WorkspaceController::class, 'team'])->name('team');
     Route::post('/team', [WorkspaceController::class, 'storeMember'])->name('team.store');
     Route::put('/team/{user}', [WorkspaceController::class, 'updateMember'])->name('team.update');

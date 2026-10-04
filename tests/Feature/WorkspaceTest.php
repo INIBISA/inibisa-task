@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Audience;
 use App\Models\Idea;
 use App\Models\Product;
+use App\Models\SocialMediaAccount;
 use App\Models\User;
 use App\Models\Task;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -69,6 +70,36 @@ class WorkspaceTest extends TestCase
         $this->actingAs($assignee)->get(route('tasks'))->assertSee('Buat logo');
         $this->actingAs($other)->get(route('tasks'))->assertDontSee('Buat logo');
         $this->actingAs($assignee)->put(route('tasks.update', $task), ['status' => 'Done'])->assertForbidden();
+    }
+
+    public function test_dashboard_shows_each_members_tasks_to_admin_and_only_own_tasks_to_member(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $member = User::factory()->create(['name' => 'Nara']);
+        $other = User::factory()->create(['name' => 'Dimas']);
+        $naraTask = Task::create(['title' => 'Tugas Nara', 'created_by' => $admin->id, 'status' => 'Done']);
+        $dimasTask = Task::create(['title' => 'Tugas Dimas', 'created_by' => $admin->id, 'status' => 'In Progress']);
+        $naraTask->assignees()->attach($member);
+        $dimasTask->assignees()->attach($other);
+
+        $this->actingAs($admin)->get(route('dashboard'))->assertSee(['Nara', 'Dimas', 'Tugas Nara', 'Tugas Dimas', '100%', '0%']);
+        $this->actingAs($member)->get(route('dashboard'))->assertSee(['Nara', 'Tugas Nara', '100%'])->assertDontSee(['Dimas', 'Tugas Dimas']);
+    }
+
+    public function test_member_can_manage_social_media_accounts_with_an_encrypted_password(): void
+    {
+        $member = User::factory()->create(['role' => 'member']);
+
+        $this->actingAs($member)->post(route('social-media-accounts.store'), [
+            'platform' => 'Instagram', 'name' => '@inibisa', 'url' => 'https://instagram.com/inibisa',
+            'login_email' => 'social@example.test', 'password' => 'secret-password',
+        ])->assertRedirect();
+
+        $account = SocialMediaAccount::firstOrFail();
+        $this->assertSame('secret-password', $account->password);
+        $this->assertDatabaseMissing('social_media_accounts', ['id' => $account->id, 'password' => 'secret-password']);
+        $this->actingAs($member)->get(route('social-media-accounts'))->assertSee(['Instagram', '@inibisa', 'secret-password']);
+        $this->actingAs($member)->delete(route('social-media-accounts.destroy', $account))->assertRedirect();
     }
 
     public function test_product_idea_and_audience_can_be_updated(): void

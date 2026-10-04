@@ -87,6 +87,24 @@
     .card {
         @apply rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200/70;
     }
+    .member-workload-card {
+        @apply overflow-hidden rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70 transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:ring-blue-100;
+    }
+    .member-status-pill {
+        @apply inline-flex shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black ring-1;
+    }
+    .member-mini-stat {
+        @apply rounded-xl bg-slate-50 px-2.5 py-2 text-center ring-1 ring-slate-100;
+    }
+    .member-mini-stat span {
+        @apply block text-sm font-black text-slate-900;
+    }
+    .member-mini-stat p {
+        @apply mt-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-400;
+    }
+    .member-task-row {
+        @apply flex items-start gap-3 rounded-xl px-2.5 py-2 transition hover:bg-slate-50;
+    }
     .entity-card {
         @apply relative flex h-full flex-col overflow-hidden border-t-[3px] p-5 transition duration-200 hover:-translate-y-0.5 hover:shadow-md;
         border-top-color: var(--card-accent);
@@ -171,8 +189,8 @@
 }
 
 .dark body { background: #101820; color: #e2e8f0; }
-.dark header, .dark .modal, .dark .card, .dark .badge, .dark [class*="bg-white"] { background-color: #17232d !important; }
-.dark header, .dark .card, .dark .modal, .dark [class*="border-slate"], .dark [class*="border-cyan"] { border-color: #2b3c48 !important; }
+.dark header, .dark .modal, .dark .card, .dark .member-workload-card, .dark .badge, .dark [class*="bg-white"] { background-color: #17232d !important; }
+.dark header, .dark .card, .dark .member-workload-card, .dark .modal, .dark [class*="border-slate"], .dark [class*="border-cyan"] { border-color: #2b3c48 !important; }
 .dark .top-nav, .dark .mobile-nav, .dark .account-menu, .dark [class*="text-slate-"] { color: #aab8c5; }
 .dark .theme-toggle { color: #a5f3fc; }
 .dark .theme-toggle-sun {
@@ -189,6 +207,7 @@
 .dark .action-button { background-color: #1c2b36; border-color: #38505f; color: #d1dce5; }
 .dark .action-danger { color: #fda4af; }
 .dark .entity-card .card-actions { border-color: #2b3c48; }
+.dark .member-mini-stat, .dark .member-task-row:hover { background-color: #1c2b36; box-shadow: inset 0 0 0 1px #2b3c48; }
 .dark .field { background-color: #22323f; color: #e2e8f0; box-shadow: inset 0 0 0 1px #38505f; }
 .dark [class*="bg-slate-100"] { background-color: #1c2b36 !important; }
 .dark [class*="bg-slate-900"] { background-color: #22d3ee !important; color: #082f49 !important; }

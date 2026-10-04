@@ -7,6 +7,7 @@ use App\Models\Audience;
 use App\Models\Idea;
 use App\Models\Milestone;
 use App\Models\Product;
+use App\Models\SocialMediaAccount;
 use App\Models\Subtask;
 use App\Models\Task;
 use App\Models\User;
@@ -21,10 +22,16 @@ class WorkspaceController extends Controller
         $tasks = Task::with(['product', 'assignees'])->latest();
         $this->visibleTasks($tasks, request());
         $tasks = $tasks->get();
+
+        $members = User::with(['assignedTasks' => fn ($query) => $query->with('product')->latest()])
+            ->when(request()->user()->role !== 'admin', fn ($query) => $query->whereKey(request()->user()->id))
+            ->orderBy('name')
+            ->get();
+
         return view('workspace.dashboard', [
-            'tasks' => $tasks->take(8), 'products' => Product::with('tasks')->latest()->get(),
+            'products' => Product::with('tasks')->latest()->get(),
             'stats' => ['active' => Product::where('status', 'active')->count(), 'progress' => $tasks->where('status', 'In Progress')->count(), 'done' => $tasks->where('status', 'Done')->count(), 'blocked' => $tasks->where('is_blocked', true)->count(), 'ideas' => Idea::count()],
-            'activities' => Activity::with('user')->latest()->take(8)->get(), 'members' => User::withCount('assignedTasks')->get(),
+            'members' => $members,
         ]);
     }
 
@@ -98,6 +105,11 @@ class WorkspaceController extends Controller
         return back()->with('success', 'Anggota dihapus.');
     }
     public function activityIndex() { return view('workspace.activity', ['activities'=>Activity::with('user')->latest()->paginate(30)]); }
+    public function socialMediaAccounts() { return view('workspace.social-media-accounts', ['accounts' => SocialMediaAccount::latest()->get()]); }
+    public function storeSocialMediaAccount(Request $request) { $data = $request->validate(['platform'=>'required|string|max:100','name'=>'required|string|max:255','url'=>'required|url:http,https|max:2048','login_email'=>'nullable|email|max:255','password'=>'nullable|string|max:255']); SocialMediaAccount::create($data); return back()->with('success', 'Akun sosial media ditambahkan.'); }
+    public function updateSocialMediaAccount(Request $request, SocialMediaAccount $socialMediaAccount) { $data = $request->validate(['platform'=>'required|string|max:100','name'=>'required|string|max:255','url'=>'required|url:http,https|max:2048','login_email'=>'nullable|email|max:255','password'=>'nullable|string|max:255']); if (blank($data['password'])) unset($data['password']); $socialMediaAccount->update($data); return back()->with('success', 'Akun sosial media diperbarui.'); }
+    public function deactivateSocialMediaAccount(SocialMediaAccount $socialMediaAccount) { $socialMediaAccount->update(['is_active' => false]); return back()->with('success', 'Akun sosial media dinonaktifkan.'); }
+    public function destroySocialMediaAccount(SocialMediaAccount $socialMediaAccount) { $socialMediaAccount->delete(); return back()->with('success', 'Akun sosial media dihapus.'); }
     public function activity(Request $request, string $action, $subject): void { Activity::create(['user_id'=>$request->user()->id,'action'=>$action,'subject_type'=>$subject::class,'subject_id'=>$subject->id]); }
     private function admin(Request $request): void { abort_unless($request->user()->role === 'admin', 403); }
     private function canEditTask(Request $request, Task $task): void { abort_unless($request->user()->role === 'admin' || $task->created_by === $request->user()->id, 403); }
