@@ -19,6 +19,7 @@
         "vite": "^7.0.7"
     },
     "dependencies": {
-        "lucide": "^1.51.0"
+        "lucide": "^1.51.0",
+        "sweetalert2": "^11.26.25"
     }
 }
