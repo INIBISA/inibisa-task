@@ -1,13 +1,13 @@
 <x-workspace heading="Overview">
     @php($priorities = ['urgent' => 'Mendesak', 'high' => 'Tinggi', 'normal' => 'Normal', 'low' => 'Rendah', 'P0' => 'Mendesak', 'P1' => 'Tinggi', 'P2' => 'Normal', 'P3' => 'Rendah'])
-    <div class="mb-8 rounded-3xl bg-slate-900 p-7 text-white">
-        <p class="text-xs font-bold tracking-widest text-lime-300">FOCUS THIS MONTH</p>
+    <div class="brand-panel mb-8">
+        <p class="text-xs font-bold tracking-widest text-cyan-200">FOCUS THIS MONTH</p>
         <div class="mt-3 flex flex-wrap items-end justify-between gap-5">
             <div>
                 <h2 class="text-3xl font-black">Build what matters.</h2>
                 <p class="mt-2 text-slate-300">{{ $products->first()?->name ?? 'Mulai produk pertama Anda' }}</p>
             </div><a href="{{ route('products') }}"
-                class="rounded-xl bg-lime-300 px-4 py-2 text-sm font-bold text-slate-950">Lihat produk</a>
+                class="rounded-xl bg-white px-4 py-2 text-sm font-bold text-blue-800 shadow-sm transition hover:text-fuchsia-600">Lihat produk</a>
         </div>
     </div>
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
@@ -21,14 +21,14 @@
     <div class="mt-8 grid gap-7 xl:grid-cols-[1.5fr_1fr]">
         <section>
             <div class="mb-3 flex items-center justify-between">
-                <h2 class="font-bold">Task terbaru</h2><a class="text-sm font-semibold text-lime-700"
+                <h2 class="font-bold">Task terbaru</h2><a class="brand-link text-sm"
                     href="{{ route('tasks') }}">Buka board</a>
             </div>
             <div class="space-y-2">
                 @forelse($tasks as $task)
                     @php($priorityClass = ['P0' => 'urgent', 'P1' => 'high', 'P2' => 'normal', 'P3' => 'low'][$task->priority] ?? $task->priority)
                     <div class="card flex items-center gap-3"><span
-                            class="h-2.5 w-2.5 rounded-full {{ $task->is_blocked ? 'bg-rose-500' : 'bg-lime-500' }}"></span>
+                            class="h-2.5 w-2.5 rounded-full {{ $task->is_blocked ? 'bg-rose-500' : 'bg-cyan-500' }}"></span>
                         <div class="min-w-0 flex-1">
                             <p class="truncate font-semibold">{{ $task->title }}</p>
                             <p class="text-xs text-slate-400">{{ $task->product?->name ?? 'Tanpa produk' }} ·

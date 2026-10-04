@@ -1,7 +1,7 @@
 <x-workspace heading="Products">
     @php($priorities = ['urgent' => 'Mendesak', 'high' => 'Tinggi', 'normal' => 'Normal', 'low' => 'Rendah', 'P0' => 'Mendesak', 'P1' => 'Tinggi', 'P2' => 'Normal', 'P3' => 'Rendah'])
     <div class="mb-6 flex justify-end"><button onclick="document.getElementById('product-form').showModal()"
-            class="rounded-xl bg-lime-300 px-4 py-2 text-sm font-bold">+ Produk baru</button></div>
+            class="brand-button">+ Produk baru</button></div>
     <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         @forelse($products as $product)
             @php($priorityClass = ['P0' => 'urgent', 'P1' => 'high', 'P2' => 'normal', 'P3' => 'low'][$product->priority] ?? $product->priority)
@@ -17,7 +17,7 @@
                     <div class="mb-1 flex justify-between text-xs">
                         <span>Progress</span><span>{{ $total ? round(($done / $total) * 100) : 0 }}%</span></div>
                     <div class="h-2 overflow-hidden rounded bg-slate-100">
-                        <div class="h-full bg-lime-400" style="width:{{ $total ? round(($done / $total) * 100) : 0 }}%"></div>
+                        <div class="brand-progress h-full" style="width:{{ $total ? round(($done / $total) * 100) : 0 }}%"></div>
                     </div>
                 </div>
         </article>@empty<div class="card text-slate-500">Belum ada produk.</div>
@@ -53,7 +53,7 @@
                     @endforeach
                 </select>
             </div><input class="field w-full" type="date" name="target_launch"><button
-                class="rounded-xl bg-slate-900 px-4 py-2 text-white">Buat</button>
+                class="brand-button-dark">Buat</button>
         </form>
     </dialog>
 </x-workspace>

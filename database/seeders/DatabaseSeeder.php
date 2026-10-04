@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $hael = User::factory()->create(['name' => 'Hael', 'email' => 'hael@inibisa.test', 'role' => 'admin', 'position' => 'Product Lead']);
-        $nara = User::factory()->create(['name' => 'Nara', 'email' => 'ya ', 'position' => 'Designer']);
+        $nara = User::factory()->create(['name' => 'Nara', 'email' => 'nara@inibisa.test', 'position' => 'Designer']);
         $bima = User::factory()->create(['name' => 'Bima', 'email' => 'bima@inibisa.test', 'position' => 'Developer']);
         $audience = Audience::create(['name' => 'Persiapan Menikah', 'slug' => 'persiapan-menikah', 'description' => 'Pasangan yang menyiapkan hari pernikahan.', 'icon' => '💍']);
         Audience::create(['name' => 'Pacaran', 'slug' => 'pacaran', 'description' => 'Pasangan yang merayakan hubungan.', 'icon' => '♥']);
