@@ -80,6 +80,9 @@
     .mobile-install-button svg {
         @apply h-5 w-5 shrink-0;
     }
+    .desktop-install-button {
+        @apply min-h-10 min-w-10 items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-2.5 text-xs font-black text-blue-800 transition hover:border-blue-300 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400;
+    }
     .mobile-status-tab {
         @apply inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-600;
     }
@@ -304,6 +307,8 @@
 }
 .dark .top-nav-active { color: #e0f2fe !important; }
 .dark .mobile-bottom-nav { background-color: #17232d; border-color: #38505f; }
+.dark .install-offer { border-color: #38505f; }
+.dark .desktop-install-button { background-color: #123447; border-color: #225a72; color: #a5f3fc; }
 .dark .mobile-nav-icon { color: #aab8c5; }
 .dark .mobile-nav-active { background-color: #123447; color: #a5f3fc !important; }
 .dark .mobile-nav-active .mobile-nav-icon { background-color: #2563eb; color: white; }

@@ -28,22 +28,41 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
 }
 
 const installButtons = [...document.querySelectorAll('[data-install-app]')];
+const installOffer = document.querySelector('[data-install-offer]');
 const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 let installPrompt = null;
+let installOfferTimer = null;
 const updateInstallButtons = () => installButtons.forEach((button) => { button.hidden = isStandalone(); });
 
-window.addEventListener('beforeinstallprompt', (event) => {
-    event.preventDefault();
-    installPrompt = event;
-    updateInstallButtons();
-});
-window.addEventListener('appinstalled', () => {
-    installPrompt = null;
-    installButtons.forEach((button) => { button.hidden = true; });
-});
-updateInstallButtons();
+const dismissInstallOffer = () => {
+    if (installOffer) installOffer.hidden = true;
+    sessionStorage.setItem('inibisa-install-offer-shown', '1');
+};
 
-installButtons.forEach((button) => button.addEventListener('click', async () => {
+const scheduleInstallOffer = () => {
+    if (!installOffer || !installPrompt || isStandalone() || installOfferTimer || sessionStorage.getItem('inibisa-install-offer-shown')) return;
+    installOfferTimer = window.setTimeout(() => {
+        installOfferTimer = null;
+        if (document.visibilityState !== 'visible' || !installPrompt || isStandalone()) return;
+        installOffer.hidden = false;
+        sessionStorage.setItem('inibisa-install-offer-shown', '1');
+    }, 1500);
+};
+
+const showInstallGuide = () => {
+    const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const message = !window.isSecureContext
+        ? 'Buka IniBisa melalui alamat HTTPS di HP. Alamat HTTP dengan IP lokal belum memenuhi syarat instalasi PWA.'
+        : ios
+            ? 'Di Safari, ketuk tombol Bagikan lalu pilih Tambahkan ke Layar Utama.'
+            : window.matchMedia('(min-width: 1024px)').matches
+                ? 'Klik ikon instal (monitor dengan panah turun) di sisi kanan address bar Chrome. Jika belum terlihat, buka ulang halaman setelah beberapa saat.'
+                : 'Buka menu browser lalu pilih Instal aplikasi atau Tambahkan ke layar utama. Jika pilihan belum muncul, buka ulang halaman setelah beberapa saat.';
+
+    return Swal.fire({ icon: 'info', title: 'Pasang IniBisa', text: message, confirmButtonText: 'Mengerti', confirmButtonColor: '#2563eb' });
+};
+
+const requestInstall = async () => {
     if (installPrompt) {
         const prompt = installPrompt;
         installPrompt = null;
@@ -55,16 +74,33 @@ installButtons.forEach((button) => button.addEventListener('click', async () => 
             // If the browser no longer accepts this prompt, show installation guidance.
         }
     }
+    await showInstallGuide();
+};
 
-    const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    const message = !window.isSecureContext
-        ? 'Buka IniBisa melalui alamat HTTPS di HP. Alamat HTTP dengan IP lokal belum memenuhi syarat instalasi PWA.'
-        : ios
-            ? 'Di Safari, ketuk tombol Bagikan lalu pilih Tambahkan ke Layar Utama.'
-            : 'Buka menu browser lalu pilih Instal aplikasi atau Tambahkan ke layar utama. Jika pilihan belum muncul, buka ulang halaman setelah beberapa saat.';
+window.addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault();
+    installPrompt = event;
+    updateInstallButtons();
+    scheduleInstallOffer();
+});
+window.addEventListener('appinstalled', () => {
+    installPrompt = null;
+    installButtons.forEach((button) => { button.hidden = true; });
+    dismissInstallOffer();
+});
+document.addEventListener('visibilitychange', scheduleInstallOffer);
+updateInstallButtons();
 
-    Swal.fire({ icon: 'info', title: 'Pasang IniBisa', text: message, confirmButtonText: 'Mengerti', confirmButtonColor: '#2563eb' });
+installButtons.forEach((button) => button.addEventListener('click', async () => {
+    if (installOffer && !installOffer.hidden) dismissInstallOffer();
+    await requestInstall();
 }));
+
+installOffer?.querySelectorAll('[data-install-offer-close]').forEach((button) => button.addEventListener('click', dismissInstallOffer));
+installOffer?.querySelector('[data-install-offer-action]')?.addEventListener('click', async () => {
+    dismissInstallOffer();
+    await requestInstall();
+});
 
 document.addEventListener('submit', async (event) => {
     const form = event.target;

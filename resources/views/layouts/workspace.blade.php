@@ -34,6 +34,7 @@
                     href="{{ route('team') }}">Tim</a>
             </nav>
             <div class="flex items-center justify-end gap-2" x-data="{ open: false }">
+                <button type="button" data-install-app hidden class="desktop-install-button hidden lg:inline-flex" aria-label="Pasang aplikasi" title="Pasang IniBisa"><i data-lucide="download" class="h-5 w-5"></i><span class="hidden xl:inline">Pasang aplikasi</span></button>
                 <button type="button" @click="$store.theme.toggle()" class="theme-toggle" :aria-label="$store.theme.dark ? 'Aktifkan mode terang' : 'Aktifkan mode gelap'" :title="$store.theme.dark ? 'Mode terang' : 'Mode gelap'">
                     <span class="theme-toggle-sun" aria-hidden="true">
                         <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
@@ -70,6 +71,14 @@
         @endif
         <div class="workspace-content p-4 pb-28 sm:p-5 xl:p-9">{{ $slot }}</div>
     </main>
+    <aside data-install-offer hidden class="install-offer fixed inset-x-4 bottom-28 z-50 rounded-2xl border border-blue-100 bg-white p-4 shadow-2xl shadow-blue-950/20 lg:inset-x-auto lg:bottom-6 lg:right-6 lg:w-96" role="region" aria-labelledby="install-offer-title">
+        <div class="flex items-start gap-3">
+            <img src="/icons/pwa-192.png" alt="" class="h-12 w-12 rounded-xl border border-slate-100 object-cover">
+            <div class="min-w-0 flex-1"><h2 id="install-offer-title" class="text-base font-black">Pasang IniBisa?</h2><p class="mt-1 text-sm leading-5 text-slate-500">Buka tugas dan produk langsung dari layar utama.</p></div>
+            <button type="button" data-install-offer-close class="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-xl text-slate-400 hover:bg-slate-100" aria-label="Tutup ajakan instal">×</button>
+        </div>
+        <div class="mt-4 flex gap-2"><button type="button" data-install-offer-action class="brand-button min-h-11 flex-1">Pasang aplikasi</button><button type="button" data-install-offer-close class="action-button min-h-11 px-4">Nanti</button></div>
+    </aside>
     <div x-cloak x-show="moreOpen" x-transition.opacity class="fixed inset-0 z-30 bg-slate-950/40 lg:hidden" @click="moreOpen = false"></div>
     <section x-cloak x-show="moreOpen" x-transition:enter="transition duration-200 ease-out" x-transition:enter-start="translate-y-full" x-transition:enter-end="translate-y-0" x-transition:leave="transition duration-150 ease-in" x-transition:leave-start="translate-y-0" x-transition:leave-end="translate-y-full" class="mobile-more-sheet fixed inset-x-0 bottom-0 z-40 rounded-t-3xl bg-white p-4 shadow-2xl lg:hidden" aria-label="Menu lainnya">
         <div class="mb-4 flex items-center justify-between"><h2 class="text-lg font-black">Menu lainnya</h2><button type="button" @click="moreOpen = false" class="grid h-11 w-11 place-items-center rounded-xl bg-slate-100" aria-label="Tutup menu">×</button></div>

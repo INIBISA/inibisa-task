@@ -79,9 +79,13 @@ Open `http://127.0.0.1:8000`.
 
 ## Install as a PWA
 
-Open **Lainnya → Pasang IniBisa** on mobile. When the browser supports a direct install prompt, the button opens it. On iPhone, open the site in Safari and choose **Share → Add to Home Screen**. The same installation guide is available on the login screen.
+Open **Lainnya → Pasang IniBisa** on mobile or **Pasang aplikasi** in the desktop header. When Chrome allows installation, IniBisa shows an invitation and the button opens Chrome's install dialog. On iPhone, open the site in Safari and choose **Share → Add to Home Screen**. The same installation guide is available on the login screen.
 
 For deployment, serve the site over HTTPS and run `npm run build`. Browser installation and service workers require a secure origin; `localhost` and `127.0.0.1` work only on the same device for local development. Opening `php artisan serve` on a phone through `http://192.168.x.x:8000` is **not** a secure origin and cannot install the PWA. Use an HTTPS domain or HTTPS tunnel on the phone, and set `APP_URL` to that HTTPS address.
+
+Deploy the updated Laravel views and JavaScript build **together** with `public/manifest.webmanifest`, `public/sw.js`, the icons, and `public/build`. A browser still loading an older `sw.js` or build cannot show the new install invitation.
+
+For the Git pull deployment used by `task.inibisa.my.id`, after the updated commit is pushed, run `git pull origin main` and `php artisan optimize:clear` on the server. Reload the site afterward so the browser checks the new service worker and manifest.
 
 When offline, the app shows a retry page. Workspace data and changes require a connection and are never stored in the service worker cache.
 
