@@ -5,6 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="push-public-key" content="{{ config('push.private_key') ? config('push.public_key') : '' }}">
     <title>{{ $title ?? 'IniBisa' }}</title>
     <x-pwa-head />
     <script>if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');</script>
@@ -54,6 +55,7 @@
                 </button>
                 <div x-cloak x-show="open" x-transition class="absolute right-5 top-14 z-30 w-56 rounded-2xl border border-cyan-100 bg-white p-2 shadow-xl xl:right-9">
                     <a href="{{ route('profile.edit') }}" class="account-menu">Pengaturan akun</a>
+                    <button type="button" data-push-toggle class="account-menu w-full">Aktifkan notifikasi</button>
                     <div class="my-1 border-t border-slate-100"></div>
                     <form method="POST" action="{{ route('logout') }}">@csrf<button class="account-menu w-full text-rose-600 hover:bg-rose-50">Keluar</button></form>
                 </div>
@@ -88,6 +90,7 @@
             <a class="mobile-more-link" href="{{ route('team') }}"><i data-lucide="user-round"></i>Tim</a>
             <a class="mobile-more-link" href="{{ route('profile.edit') }}"><i data-lucide="settings-2"></i>Akun saya</a>
         </div>
+        <button type="button" data-push-toggle class="mobile-install-button mt-3"><i data-lucide="bell"></i><span>Aktifkan notifikasi<span class="block text-xs font-medium opacity-80">Info tugas baru dan perubahan tugas</span></span></button>
         <button type="button" data-install-app hidden class="mobile-install-button mt-3"><i data-lucide="download"></i><span>Pasang IniBisa<span class="block text-xs font-medium opacity-80">Buka langsung dari layar utama</span></span></button>
     </section>
     <nav class="mobile-bottom-nav fixed z-20 grid grid-cols-5 gap-1 rounded-[1.4rem] border border-slate-200 bg-white/95 p-1.5 shadow-xl shadow-slate-900/10 backdrop-blur lg:hidden" aria-label="Navigasi utama">

@@ -4,7 +4,8 @@ import Alpine from 'alpinejs';
 import Sortable from 'sortablejs';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
-import { createIcons, Archive, ArrowRight, AtSign, CalendarDays, CircleCheck, Download, Funnel, House, Inbox, Layers3, Lightbulb, ListTodo, Menu, Package, Pencil, Plus, Search, Settings2, Trash2, UserRound, UsersRound, UserX } from 'lucide';
+import { createIcons, Archive, ArrowRight, AtSign, Bell, CalendarDays, CircleCheck, Download, Funnel, House, Inbox, Layers3, Lightbulb, ListTodo, Menu, Package, Pencil, Plus, Search, Settings2, Trash2, UserRound, UsersRound, UserX } from 'lucide';
+import { initPushNotifications } from './push-notifications';
 
 window.Alpine = Alpine;
 
@@ -19,13 +20,15 @@ Alpine.store('theme', {
 
 Alpine.start();
 
-createIcons({ icons: { Archive, ArrowRight, AtSign, CalendarDays, CircleCheck, Download, Funnel, House, Inbox, Layers3, Lightbulb, ListTodo, Menu, Package, Pencil, Plus, Search, Settings2, Trash2, UserRound, UsersRound, UserX }, attrs: { 'stroke-width': 1.8 } });
+createIcons({ icons: { Archive, ArrowRight, AtSign, Bell, CalendarDays, CircleCheck, Download, Funnel, House, Inbox, Layers3, Lightbulb, ListTodo, Menu, Package, Pencil, Plus, Search, Settings2, Trash2, UserRound, UsersRound, UserX }, attrs: { 'stroke-width': 1.8 } });
 
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).catch(() => {});
     });
 }
+
+initPushNotifications(Swal);
 
 const installButtons = [...document.querySelectorAll('[data-install-app]')];
 const installOffer = document.querySelector('[data-install-offer]');

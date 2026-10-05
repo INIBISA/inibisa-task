@@ -1,4 +1,4 @@
-const CACHE = 'inibisa-static-v2';
+const CACHE = 'inibisa-static-v3';
 const APP_SHELL = ['/offline.html', '/icons/pwa-192.png', '/icons/pwa-512.png'];
 
 self.addEventListener('install', (event) => {
@@ -35,4 +35,32 @@ self.addEventListener('fetch', (event) => {
         }
         return response;
     })));
+});
+
+self.addEventListener('push', (event) => {
+    let payload = {};
+    try { payload = event.data?.json() || {}; } catch { /* Show a generic message for malformed payloads. */ }
+    const url = new URL(payload.url || '/tasks', self.location.origin);
+    if (url.origin !== self.location.origin || url.pathname !== '/tasks') url.href = `${self.location.origin}/tasks`;
+
+    event.waitUntil(self.registration.showNotification(payload.title || 'IniBisa', {
+        body: payload.body || 'Ada pembaruan tugas.',
+        icon: '/icons/pwa-192.png',
+        badge: '/icons/favicon-32.png',
+        tag: payload.tag || 'inibisa-task',
+        data: { url: url.href },
+    }));
+});
+
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+    const url = event.notification.data?.url || `${self.location.origin}/tasks`;
+    event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async (clients) => {
+        const existing = clients.find((client) => new URL(client.url).origin === self.location.origin);
+        if (existing) {
+            await existing.navigate(url);
+            return existing.focus();
+        }
+        return self.clients.openWindow(url);
+    }));
 });

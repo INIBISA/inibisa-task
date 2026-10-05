@@ -15,6 +15,7 @@ IniBisa connects audience, product, task, idea, and team workload in one private
 - Team member CRUD for admins: create, edit, reset password, deactivate.
 - Product progress calculated from completed tasks.
 - Audit activities stored for future notification use.
+- Browser push notifications for new and updated tasks, sent to the task creator and assignees (except the person making the change).
 
 ## Stack
 
@@ -140,6 +141,25 @@ On mobile, switch status with the tabs and open a task to change its status.
 ## Realtime
 
 The current version uses standard page updates. Laravel Reverb/Echo is intentionally not configured yet. Add it when concurrent realtime collaboration needs justify infrastructure.
+
+## Push Notifications
+
+Web Push needs HTTPS, a working service worker, and one VAPID key pair per deployment. Generate the keys once on the server:
+
+```bash
+php artisan push:keys
+```
+
+Copy the three printed `VAPID_*` values into the server's `.env`. `VAPID_SUBJECT` should be a reachable HTTPS URL such as `https://task.inibisa.my.id` (or a `mailto:` contact). Keep `VAPID_PRIVATE_KEY` secret and keep the same key pair while subscriptions are active. Then run:
+
+```bash
+php artisan config:clear
+php artisan migrate --force
+```
+
+After `git pull`, also run `composer install --no-dev --optimize-autoloader` and `npm ci && npm run build` if the server builds frontend assets. Ensure the new `public/sw.js` and `public/build` files are served. No queue worker is required for push delivery.
+
+Each member opens **Pengaturan Akun → Notifikasi tugas → Aktifkan notifikasi** on each device and accepts the browser permission. Notifications can be turned off there. On iPhone/iPad, install IniBisa to the Home Screen first and open it from the Home Screen icon to enable notifications. If an old browser subscription is tied to previous VAPID keys, turn notifications off and on again.
 
 ## Product Specification
 

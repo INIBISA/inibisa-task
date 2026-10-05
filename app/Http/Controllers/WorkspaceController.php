@@ -11,6 +11,7 @@ use App\Models\SocialMediaAccount;
 use App\Models\Subtask;
 use App\Models\Task;
 use App\Models\User;
+use App\Services\TaskPushNotifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -46,17 +47,29 @@ class WorkspaceController extends Controller
         return view('workspace.tasks', ['tasks' => $query->get(), 'products' => Product::where('status', 'active')->orderBy('name')->get(), 'members' => User::orderBy('name')->get(), 'milestones' => Milestone::orderBy('name')->get()]);
     }
 
-    public function storeTask(Request $request)
+    public function storeTask(Request $request, TaskPushNotifier $pushNotifier)
     {
         $data = $request->validate(['title'=>'required|string|max:255','description'=>'nullable|string','product_id'=>'nullable|exists:products,id','milestone_id'=>'nullable|exists:milestones,id','priority'=>'required|in:urgent,high,normal,low','status'=>'required|in:Backlog,Planned,In Progress,Review,Done','due_date'=>'nullable|date','assignees'=>'array','assignees.*'=>'exists:users,id']);
-        $task = Task::create($data + ['created_by' => $request->user()->id]); $task->assignees()->sync($data['assignees'] ?? []); $this->activity($request, 'membuat tugas', $task); return back()->with('success', 'Tugas dibuat.');
+        $task = Task::create($data + ['created_by' => $request->user()->id]);
+        $task->assignees()->sync($data['assignees'] ?? []);
+        $this->activity($request, 'membuat tugas', $task);
+        $pushNotifier->send($task, $request->user()->id, 'created');
+        return back()->with('success', 'Tugas dibuat.');
     }
 
-    public function updateTask(Request $request, Task $task)
+    public function updateTask(Request $request, Task $task, TaskPushNotifier $pushNotifier)
     {
         $this->canEditTask($request, $task);
         $data = $request->validate(['title'=>'sometimes|required|string|max:255','description'=>'nullable|string','product_id'=>'nullable|exists:products,id','milestone_id'=>'nullable|exists:milestones,id','priority'=>'sometimes|required|in:urgent,high,normal,low','status'=>'sometimes|required|in:Backlog,Planned,In Progress,Review,Done','position'=>'nullable|integer|min:0','due_date'=>'nullable|date','is_blocked'=>'nullable|boolean','blocked_reason'=>'nullable|string','assignees'=>'array','assignees.*'=>'exists:users,id']);
-        $task->update($data); if ($request->has('assignees_present')) $task->assignees()->sync($data['assignees'] ?? []); $this->activity($request, 'memperbarui tugas', $task); return back()->with('success', 'Tugas diperbarui.');
+        $task->update($data);
+        $assigneesChanged = false;
+        if ($request->has('assignees_present')) {
+            $changes = $task->assignees()->sync($data['assignees'] ?? []);
+            $assigneesChanged = count($changes['attached']) > 0 || count($changes['detached']) > 0;
+        }
+        $this->activity($request, 'memperbarui tugas', $task);
+        if ($task->wasChanged() || $assigneesChanged) $pushNotifier->send($task, $request->user()->id, 'updated');
+        return back()->with('success', 'Tugas diperbarui.');
     }
 
     public function destroyTask(Request $request, Task $task)
@@ -66,8 +79,23 @@ class WorkspaceController extends Controller
         return back()->with('success', 'Tugas dihapus.');
     }
 
-    public function subtask(Request $request, Task $task) { $this->canEditTask($request, $task); $data = $request->validate(['title'=>'required|string|max:255']); $task->subtasks()->create($data); return back(); }
-    public function toggleSubtask(Request $request, Subtask $subtask) { $this->canEditTask($request, $subtask->task); $subtask->update(['is_completed' => !$subtask->is_completed]); return back(); }
+    public function subtask(Request $request, Task $task, TaskPushNotifier $pushNotifier)
+    {
+        $this->canEditTask($request, $task);
+        $data = $request->validate(['title'=>'required|string|max:255']);
+        $task->subtasks()->create($data);
+        $pushNotifier->send($task, $request->user()->id, 'updated');
+        return back();
+    }
+
+    public function toggleSubtask(Request $request, Subtask $subtask, TaskPushNotifier $pushNotifier)
+    {
+        $task = $subtask->task;
+        $this->canEditTask($request, $task);
+        $subtask->update(['is_completed' => !$subtask->is_completed]);
+        $pushNotifier->send($task, $request->user()->id, 'updated');
+        return back();
+    }
 
     public function products() { return view('workspace.products', ['products'=>Product::with(['audience','owner','tasks'])->latest()->get(), 'audiences'=>Audience::orderBy('position')->get(), 'members'=>User::orderBy('name')->get()]); }
     public function storeProduct(Request $request) { $data=$request->validate(['name'=>'required|max:255','audience_id'=>'nullable|exists:audiences,id','owner_id'=>'nullable|exists:users,id','description'=>'nullable','problem'=>'nullable','solution'=>'nullable','stage'=>'required','priority'=>'required|in:urgent,high,normal,low','target_launch'=>'nullable|date']); $product=Product::create($data+['slug'=>Str::slug($data['name']).'-'.Str::lower(Str::random(5))]); $this->activity($request,'membuat produk',$product); return back()->with('success','Produk dibuat.'); }
