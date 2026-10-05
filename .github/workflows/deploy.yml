@@ -1,0 +1,107 @@
+name: Deploy INIBISA Task
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: inibisa-task-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Setup SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.CPANEL_SSH_KEY }}
+          SSH_HOST: ${{ secrets.CPANEL_HOST }}
+          SSH_PORT: ${{ secrets.CPANEL_PORT }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+
+          ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts
+
+      - name: Deploy to Rumahweb
+        env:
+          SSH_HOST: ${{ secrets.CPANEL_HOST }}
+          SSH_USER: ${{ secrets.CPANEL_USER }}
+          SSH_PORT: ${{ secrets.CPANEL_PORT }}
+        run: |
+          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" 'bash -se' <<'EOF'
+          set -Eeuo pipefail
+
+          PROJECT="/home/waly3458/public_html/task.inibisa.my.id/inibisa-task"
+          PHP="/opt/alt/php84/usr/bin/php"
+          EXT_DIR="/opt/alt/php84/usr/lib64/php/modules"
+
+          cd "$PROJECT"
+
+          echo "=== Preparing PHP 8.4 ==="
+
+          PHP_CMD=("$PHP")
+
+          for EXT in dom fileinfo mbstring pdo_sqlite phar; do
+              if ! "$PHP" -m | grep -qi "^${EXT}$"; then
+                  if [ -f "$EXT_DIR/${EXT}.so" ]; then
+                      PHP_CMD+=(-d "extension=$EXT_DIR/${EXT}.so")
+                  fi
+              fi
+          done
+
+          echo "=== Backup SQLite ==="
+
+          BACKUP_DIR="$HOME/backups/inibisa-task"
+          mkdir -p "$BACKUP_DIR"
+
+          cp database/database.sqlite \
+            "$BACKUP_DIR/database-$(date +%Y%m%d-%H%M%S).sqlite"
+
+          echo "=== Preserve cPanel .htaccess ==="
+
+          HTACCESS_STASHED=0
+
+          if ! git diff --quiet -- public/.htaccess; then
+              git stash push \
+                -m "ci-cpanel-php84-handler-$(date +%s)" \
+                -- public/.htaccess
+
+              HTACCESS_STASHED=1
+          fi
+
+          echo "=== Pull latest main ==="
+
+          git pull --ff-only origin main
+
+          if [ "$HTACCESS_STASHED" -eq 1 ]; then
+              git stash pop
+          fi
+
+          echo "=== Composer install ==="
+
+          COMPOSER="$(command -v composer)"
+
+          "${PHP_CMD[@]}" "$COMPOSER" install \
+            --no-dev \
+            --optimize-autoloader \
+            --no-interaction \
+            --prefer-dist
+
+          echo "=== Database migration ==="
+
+          "${PHP_CMD[@]}" artisan migrate --force
+
+          echo "=== Clear Laravel caches ==="
+
+          "${PHP_CMD[@]}" artisan optimize:clear
+          "${PHP_CMD[@]}" artisan cache:clear
+
+          echo "=== DEPLOY SUCCESS ==="
+          EOF
