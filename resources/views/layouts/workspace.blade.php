@@ -12,11 +12,11 @@
 </head>
 
 <body class="min-h-screen bg-[#f6fbff] text-slate-800" x-data="{ moreOpen: false }" @keydown.escape.window="moreOpen = false">
-    <header class="sticky top-0 z-20 border-b border-cyan-100 bg-white/95 backdrop-blur">
-        <div class="grid h-16 grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 sm:px-5 xl:px-9">
+    <header class="workspace-header sticky top-0 z-20 border-b border-cyan-100 bg-white/95 backdrop-blur">
+        <div class="grid h-16 grid-cols-[1fr_auto] items-center gap-3 px-4 sm:px-5 lg:grid-cols-[1fr_auto_1fr] xl:px-9">
             <a href="{{ route('dashboard') }}" class="flex shrink-0 items-center gap-2"><x-application-logo
                     class="h-11 w-11 rounded-xl object-contain" /><span
-                    class="hidden text-lg font-black tracking-tight sm:block">IniBisa</span></a>
+                    class="text-base font-black tracking-tight text-blue-950 sm:text-lg">IniBisa</span></a>
             <nav class="hidden items-center justify-center gap-1 lg:flex">
                 <a class="top-nav {{ request()->routeIs('dashboard') ? 'top-nav-active' : '' }}"
                     href="{{ route('dashboard') }}">Dasbor</a>
@@ -47,9 +47,9 @@
                         </svg>
                     </span>
                 </button>
-                <button type="button" @click="open = !open" @click.outside="open = false" class="flex min-h-11 items-center gap-2 rounded-xl px-2 py-1.5 text-left transition hover:bg-cyan-50" aria-label="Menu akun" :aria-expanded="open.toString()">
+                <button type="button" @click="open = !open" @click.outside="open = false" class="flex min-h-11 items-center gap-2 rounded-xl px-1 py-1.5 text-left transition hover:bg-cyan-50 sm:px-2" aria-label="Menu akun" :aria-expanded="open.toString()">
                     <span class="grid h-8 w-8 place-items-center rounded-full bg-cyan-100 text-sm font-black text-blue-800">{{ str(auth()->user()->name)->substr(0, 1) }}</span>
-                    <span class="hidden sm:block"><span class="block text-sm font-bold leading-4">{{ auth()->user()->name }}</span><span class="block text-xs text-slate-400">{{ auth()->user()->position ?: auth()->user()->role }}</span></span><span class="text-xs text-slate-400">⌄</span>
+                    <span class="hidden sm:block"><span class="block text-sm font-bold leading-4">{{ auth()->user()->name }}</span><span class="block text-xs text-slate-400">{{ auth()->user()->position ?: auth()->user()->role }}</span></span><span class="hidden text-xs text-slate-400 sm:inline">⌄</span>
                 </button>
                 <div x-cloak x-show="open" x-transition class="absolute right-5 top-14 z-30 w-56 rounded-2xl border border-cyan-100 bg-white p-2 shadow-xl xl:right-9">
                     <a href="{{ route('profile.edit') }}" class="account-menu">Pengaturan akun</a>
@@ -80,12 +80,12 @@
             <a class="mobile-more-link" href="{{ route('profile.edit') }}"><i data-lucide="settings-2"></i>Akun saya</a>
         </div>
     </section>
-    <nav class="mobile-bottom-nav fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-slate-200 bg-white/95 px-2 pt-1.5 backdrop-blur lg:hidden" aria-label="Navigasi utama">
-        <a class="mobile-nav {{ request()->routeIs('dashboard') ? 'mobile-nav-active' : '' }}" href="{{ route('dashboard') }}" @if(request()->routeIs('dashboard')) aria-current="page" @endif><i data-lucide="house"></i><span>Beranda</span></a>
-        <a class="mobile-nav {{ request()->routeIs('tasks*') ? 'mobile-nav-active' : '' }}" href="{{ route('tasks') }}" @if(request()->routeIs('tasks*')) aria-current="page" @endif><i data-lucide="list-todo"></i><span>Tugas</span></a>
-        <a class="mobile-nav {{ request()->routeIs('products*') ? 'mobile-nav-active' : '' }}" href="{{ route('products') }}" @if(request()->routeIs('products*')) aria-current="page" @endif><i data-lucide="package"></i><span>Produk</span></a>
-        <a class="mobile-nav {{ request()->routeIs('ideas*') ? 'mobile-nav-active' : '' }}" href="{{ route('ideas') }}" @if(request()->routeIs('ideas*')) aria-current="page" @endif><i data-lucide="lightbulb"></i><span>Ide</span></a>
-        <button type="button" class="mobile-nav {{ request()->routeIs('audiences*', 'social-media-accounts*', 'team', 'profile.*') ? 'mobile-nav-active' : '' }}" @click="moreOpen = true" :aria-expanded="moreOpen.toString()" aria-label="Buka menu lainnya"><i data-lucide="menu"></i><span>Lainnya</span></button>
+    <nav class="mobile-bottom-nav fixed z-20 grid grid-cols-5 gap-1 rounded-[1.4rem] border border-slate-200 bg-white/95 p-1.5 shadow-xl shadow-slate-900/10 backdrop-blur lg:hidden" aria-label="Navigasi utama">
+        <a class="mobile-nav {{ request()->routeIs('dashboard') ? 'mobile-nav-active' : '' }}" href="{{ route('dashboard') }}" @if(request()->routeIs('dashboard')) aria-current="page" @endif><span class="mobile-nav-icon"><i data-lucide="house"></i></span><span class="mobile-nav-label">Beranda</span></a>
+        <a class="mobile-nav {{ request()->routeIs('tasks*') ? 'mobile-nav-active' : '' }}" href="{{ route('tasks') }}" @if(request()->routeIs('tasks*')) aria-current="page" @endif><span class="mobile-nav-icon"><i data-lucide="list-todo"></i></span><span class="mobile-nav-label">Tugas</span></a>
+        <a class="mobile-nav {{ request()->routeIs('products*') ? 'mobile-nav-active' : '' }}" href="{{ route('products') }}" @if(request()->routeIs('products*')) aria-current="page" @endif><span class="mobile-nav-icon"><i data-lucide="package"></i></span><span class="mobile-nav-label">Produk</span></a>
+        <a class="mobile-nav {{ request()->routeIs('ideas*') ? 'mobile-nav-active' : '' }}" href="{{ route('ideas') }}" @if(request()->routeIs('ideas*')) aria-current="page" @endif><span class="mobile-nav-icon"><i data-lucide="lightbulb"></i></span><span class="mobile-nav-label">Ide</span></a>
+        <button type="button" class="mobile-nav {{ request()->routeIs('audiences*', 'social-media-accounts*', 'team', 'profile.*') ? 'mobile-nav-active' : '' }}" @click="moreOpen = true" :aria-expanded="moreOpen.toString()" aria-label="Buka menu lainnya"><span class="mobile-nav-icon"><i data-lucide="menu"></i></span><span class="mobile-nav-label">Lainnya</span></button>
     </nav>
 </body>
 

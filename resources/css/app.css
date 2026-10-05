@@ -50,16 +50,22 @@
         transform: scaleX(1);
     }
     .mobile-nav {
-        @apply flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-sm font-bold text-slate-500 transition-colors;
+        @apply flex min-h-[3.9rem] min-w-0 flex-col items-center justify-center gap-0.5 rounded-2xl px-0.5 text-slate-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400;
     }
-    .mobile-nav span {
-        @apply text-[10px] leading-4;
+    .mobile-nav-icon {
+        @apply grid h-9 w-9 place-items-center rounded-xl text-slate-500 transition-all;
     }
-    .mobile-nav svg {
+    .mobile-nav-icon svg {
         @apply h-5 w-5;
+    }
+    .mobile-nav-label {
+        @apply text-[10px] font-bold leading-4;
     }
     .mobile-nav-active {
         @apply bg-blue-50 text-blue-800;
+    }
+    .mobile-nav-active .mobile-nav-icon {
+        @apply bg-blue-600 text-white shadow-sm shadow-blue-500/30;
     }
     .mobile-more-link {
         @apply flex min-h-14 items-center gap-3 rounded-xl bg-slate-50 px-4 text-sm font-bold text-slate-700 transition hover:bg-blue-50 hover:text-blue-800;
@@ -237,9 +243,10 @@
     }
 }
 
-.mobile-bottom-nav { padding-bottom: max(0.375rem, env(safe-area-inset-bottom)); }
+.workspace-header { padding-top: env(safe-area-inset-top); }
+.mobile-bottom-nav { left: 0.75rem; right: 0.75rem; bottom: calc(0.75rem + env(safe-area-inset-bottom)); }
 .mobile-more-sheet { padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); }
-.workspace-content { padding-bottom: calc(7rem + env(safe-area-inset-bottom)); }
+.workspace-content { padding-bottom: calc(7.5rem + env(safe-area-inset-bottom)); }
 
 @media (max-width: 1023px) {
     .task-board-enhanced .task-status-column { display: none; }
@@ -289,7 +296,10 @@
     transform: translateY(0) rotate(0deg) scale(1);
 }
 .dark .top-nav-active { color: #e0f2fe !important; }
+.dark .mobile-bottom-nav { background-color: #17232d; border-color: #38505f; }
+.dark .mobile-nav-icon { color: #aab8c5; }
 .dark .mobile-nav-active { background-color: #123447; color: #a5f3fc !important; }
+.dark .mobile-nav-active .mobile-nav-icon { background-color: #2563eb; color: white; }
 .dark .mobile-more-link { background-color: #1c2b36; color: #d1dce5; }
 .dark .mobile-status-tab { background-color: #17232d; border-color: #38505f; color: #d1dce5; }
 .dark .mobile-status-tab-active { background-color: #1555cf; border-color: #1555cf; color: white; }
