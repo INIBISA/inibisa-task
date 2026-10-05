@@ -79,9 +79,9 @@ Open `http://127.0.0.1:8000`.
 
 ## Install as a PWA
 
-IniBisa can be installed from a supported browser. On Android or desktop Chrome, open the site and choose **Install app** from the browser menu. On iPhone, open it in Safari and choose **Share → Add to Home Screen**.
+Open **Lainnya → Pasang IniBisa** on mobile. When the browser supports a direct install prompt, the button opens it. On iPhone, open the site in Safari and choose **Share → Add to Home Screen**. The same installation guide is available on the login screen.
 
-For deployment, serve the site over HTTPS and run `npm run build`. Browser installation and service workers require a secure origin; `localhost` and `127.0.0.1` also work for local development.
+For deployment, serve the site over HTTPS and run `npm run build`. Browser installation and service workers require a secure origin; `localhost` and `127.0.0.1` work only on the same device for local development. Opening `php artisan serve` on a phone through `http://192.168.x.x:8000` is **not** a secure origin and cannot install the PWA. Use an HTTPS domain or HTTPS tunnel on the phone, and set `APP_URL` to that HTTPS address.
 
 When offline, the app shows a retry page. Workspace data and changes require a connection and are never stored in the service worker cache.
 

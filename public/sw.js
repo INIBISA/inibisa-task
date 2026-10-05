@@ -1,5 +1,5 @@
-const CACHE = 'inibisa-static-v1';
-const APP_SHELL = ['/offline.html', '/icons/icon-192.png', '/icons/icon-512.png'];
+const CACHE = 'inibisa-static-v2';
+const APP_SHELL = ['/offline.html', '/icons/pwa-192.png', '/icons/pwa-512.png'];
 
 self.addEventListener('install', (event) => {
     event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(APP_SHELL)));

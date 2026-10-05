@@ -24,6 +24,7 @@
             <div class="w-full max-w-md rounded-3xl border border-cyan-100 bg-white px-6 py-7 shadow-xl shadow-blue-950/5 sm:px-8">
                 {{ $slot }}
             </div>
+            <button type="button" data-install-app hidden class="mt-5 rounded-xl px-4 py-3 text-sm font-bold text-blue-700 underline underline-offset-4">Pasang IniBisa di layar utama</button>
         </div>
     </body>
 </html>

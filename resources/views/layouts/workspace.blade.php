@@ -79,6 +79,7 @@
             <a class="mobile-more-link" href="{{ route('team') }}"><i data-lucide="user-round"></i>Tim</a>
             <a class="mobile-more-link" href="{{ route('profile.edit') }}"><i data-lucide="settings-2"></i>Akun saya</a>
         </div>
+        <button type="button" data-install-app hidden class="mobile-install-button mt-3"><i data-lucide="download"></i><span>Pasang IniBisa<span class="block text-xs font-medium opacity-80">Buka langsung dari layar utama</span></span></button>
     </section>
     <nav class="mobile-bottom-nav fixed z-20 grid grid-cols-5 gap-1 rounded-[1.4rem] border border-slate-200 bg-white/95 p-1.5 shadow-xl shadow-slate-900/10 backdrop-blur lg:hidden" aria-label="Navigasi utama">
         <a class="mobile-nav {{ request()->routeIs('dashboard') ? 'mobile-nav-active' : '' }}" href="{{ route('dashboard') }}" @if(request()->routeIs('dashboard')) aria-current="page" @endif><span class="mobile-nav-icon"><i data-lucide="house"></i></span><span class="mobile-nav-label">Beranda</span></a>

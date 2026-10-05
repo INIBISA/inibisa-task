@@ -4,7 +4,7 @@ import Alpine from 'alpinejs';
 import Sortable from 'sortablejs';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
-import { createIcons, Archive, ArrowRight, AtSign, CalendarDays, CircleCheck, Funnel, House, Inbox, Layers3, Lightbulb, ListTodo, Menu, Package, Pencil, Plus, Search, Settings2, Trash2, UserRound, UsersRound, UserX } from 'lucide';
+import { createIcons, Archive, ArrowRight, AtSign, CalendarDays, CircleCheck, Download, Funnel, House, Inbox, Layers3, Lightbulb, ListTodo, Menu, Package, Pencil, Plus, Search, Settings2, Trash2, UserRound, UsersRound, UserX } from 'lucide';
 
 window.Alpine = Alpine;
 
@@ -19,13 +19,52 @@ Alpine.store('theme', {
 
 Alpine.start();
 
-createIcons({ icons: { Archive, ArrowRight, AtSign, CalendarDays, CircleCheck, Funnel, House, Inbox, Layers3, Lightbulb, ListTodo, Menu, Package, Pencil, Plus, Search, Settings2, Trash2, UserRound, UsersRound, UserX }, attrs: { 'stroke-width': 1.8 } });
+createIcons({ icons: { Archive, ArrowRight, AtSign, CalendarDays, CircleCheck, Download, Funnel, House, Inbox, Layers3, Lightbulb, ListTodo, Menu, Package, Pencil, Plus, Search, Settings2, Trash2, UserRound, UsersRound, UserX }, attrs: { 'stroke-width': 1.8 } });
 
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).catch(() => {});
     });
 }
+
+const installButtons = [...document.querySelectorAll('[data-install-app]')];
+const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+let installPrompt = null;
+const updateInstallButtons = () => installButtons.forEach((button) => { button.hidden = isStandalone(); });
+
+window.addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault();
+    installPrompt = event;
+    updateInstallButtons();
+});
+window.addEventListener('appinstalled', () => {
+    installPrompt = null;
+    installButtons.forEach((button) => { button.hidden = true; });
+});
+updateInstallButtons();
+
+installButtons.forEach((button) => button.addEventListener('click', async () => {
+    if (installPrompt) {
+        const prompt = installPrompt;
+        installPrompt = null;
+        try {
+            await prompt.prompt();
+            await prompt.userChoice;
+            return;
+        } catch {
+            // If the browser no longer accepts this prompt, show installation guidance.
+        }
+    }
+
+    const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const message = !window.isSecureContext
+        ? 'Buka IniBisa melalui alamat HTTPS di HP. Alamat HTTP dengan IP lokal belum memenuhi syarat instalasi PWA.'
+        : ios
+            ? 'Di Safari, ketuk tombol Bagikan lalu pilih Tambahkan ke Layar Utama.'
+            : 'Buka menu browser lalu pilih Instal aplikasi atau Tambahkan ke layar utama. Jika pilihan belum muncul, buka ulang halaman setelah beberapa saat.';
+
+    Swal.fire({ icon: 'info', title: 'Pasang IniBisa', text: message, confirmButtonText: 'Mengerti', confirmButtonColor: '#2563eb' });
+}));
 
 document.addEventListener('submit', async (event) => {
     const form = event.target;
