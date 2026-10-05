@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+[x-cloak] { display: none !important; }
+.guest-shell { min-height: 100dvh; }
+
 @layer components {
     .brand-button {
         @apply rounded-xl px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-2;
@@ -47,10 +50,34 @@
         transform: scaleX(1);
     }
     .mobile-nav {
-        @apply flex flex-col items-center gap-1 px-4 text-sm font-bold text-slate-500;
+        @apply flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-sm font-bold text-slate-500 transition-colors;
     }
     .mobile-nav span {
-        @apply text-[10px];
+        @apply text-[10px] leading-4;
+    }
+    .mobile-nav svg {
+        @apply h-5 w-5;
+    }
+    .mobile-nav-active {
+        @apply bg-blue-50 text-blue-800;
+    }
+    .mobile-more-link {
+        @apply flex min-h-14 items-center gap-3 rounded-xl bg-slate-50 px-4 text-sm font-bold text-slate-700 transition hover:bg-blue-50 hover:text-blue-800;
+    }
+    .mobile-more-link svg {
+        @apply h-5 w-5 shrink-0;
+    }
+    .mobile-status-tab {
+        @apply inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-600;
+    }
+    .mobile-status-tab span {
+        @apply rounded-md bg-slate-100 px-1.5 py-0.5 text-xs;
+    }
+    .mobile-status-tab-active {
+        @apply border-blue-600 bg-blue-600 text-white;
+    }
+    .mobile-status-tab-active span {
+        @apply bg-white/20 text-white;
     }
     .account-menu {
         @apply flex rounded-xl px-3 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-cyan-50 hover:text-blue-800;
@@ -210,6 +237,44 @@
     }
 }
 
+.mobile-bottom-nav { padding-bottom: max(0.375rem, env(safe-area-inset-bottom)); }
+.mobile-more-sheet { padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); }
+.workspace-content { padding-bottom: calc(7rem + env(safe-area-inset-bottom)); }
+
+@media (max-width: 1023px) {
+    .task-board-enhanced .task-status-column { display: none; }
+    .task-board-enhanced .task-status-column.mobile-status-active { display: block; }
+    .task-status-column { min-height: 12rem; }
+    .task-card { cursor: pointer; }
+}
+
+@media (max-width: 639px) {
+    .brand-panel { padding: 1.25rem; border-radius: 1.25rem; }
+    .card, .member-workload-card { border-radius: 1rem; }
+    .dashboard-stats > :last-child:nth-child(odd) { grid-column: span 2; }
+    .dashboard-stats .card { padding: 0.875rem; }
+    .dashboard-stats .card p:last-child { font-size: 1.5rem; }
+    .modal {
+        position: fixed;
+        inset: auto 0 0;
+        width: 100%;
+        max-width: none;
+        max-height: min(92dvh, 900px);
+        margin: 0;
+        overflow-y: auto;
+        border-radius: 1.5rem 1.5rem 0 0;
+        padding: 1.25rem 1rem calc(1.25rem + env(safe-area-inset-bottom));
+    }
+    .modal .grid-cols-2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    .modal .field { min-width: 0; }
+    .field, .modal input, .modal select, .modal textarea { font-size: 16px; }
+    .action-button, .brand-button, .brand-button-dark { min-height: 2.75rem; }
+}
+
+@media (max-width: 389px) {
+    .modal .grid-cols-2 { grid-template-columns: minmax(0, 1fr); }
+}
+
 .dark body { background: #101820; color: #e2e8f0; }
 .dark header, .dark .modal, .dark .card, .dark .member-workload-card, .dark .badge, .dark [class*="bg-white"] { background-color: #17232d !important; }
 .dark header, .dark .card, .dark .member-workload-card, .dark .modal, .dark [class*="border-slate"], .dark [class*="border-cyan"] { border-color: #2b3c48 !important; }
@@ -224,6 +289,10 @@
     transform: translateY(0) rotate(0deg) scale(1);
 }
 .dark .top-nav-active { color: #e0f2fe !important; }
+.dark .mobile-nav-active { background-color: #123447; color: #a5f3fc !important; }
+.dark .mobile-more-link { background-color: #1c2b36; color: #d1dce5; }
+.dark .mobile-status-tab { background-color: #17232d; border-color: #38505f; color: #d1dce5; }
+.dark .mobile-status-tab-active { background-color: #1555cf; border-color: #1555cf; color: white; }
 .dark .task-tab-active { background-color: #123447 !important; border-color: #225a72 !important; color: #a5f3fc !important; }
 .dark .task-tab-active .task-tab-count { background-color: #1d4c5e !important; color: #a5f3fc !important; }
 .dark .task-dropzone-active { background-color: #123447 !important; }

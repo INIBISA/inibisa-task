@@ -12,17 +12,17 @@
         'Santai boleh, berhenti jangan.',
     ])
     @php($dailyBoost = $dailyBoosts[now()->dayOfWeekIso - 1])
-    <div class="brand-panel mb-8">
+    <div class="brand-panel mb-6 sm:mb-8">
         <p class="text-xs font-bold tracking-widest text-cyan-200">SEMANGAT HARI INI</p>
         <div class="mt-3 flex flex-wrap items-end justify-between gap-5">
             <div>
-                <h2 class="text-3xl font-black">{{ $dailyBoost }}</h2>
+                <h2 class="text-2xl font-black sm:text-3xl">{{ $dailyBoost }}</h2>
                 <p class="mt-2 text-slate-300">Fokus minggu ini: {{ $products->first()?->name ?? 'mulai produk pertama Anda' }}</p>
             </div><a href="{{ route('products') }}"
                 class="rounded-xl bg-white px-4 py-2 text-sm font-bold text-blue-800 shadow-sm transition hover:text-fuchsia-600">Lihat produk</a>
         </div>
     </div>
-    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+    <div class="dashboard-stats grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-5">
         @foreach (['Produk aktif' => $stats['active'], 'Sedang dikerjakan' => $stats['progress'], 'Selesai' => $stats['done'], 'Terblokir' => $stats['blocked'], 'Ide' => $stats['ideas']] as $name => $value)
             <div class="card">
                 <p class="text-sm text-slate-500">{{ $name }}</p>

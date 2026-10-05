@@ -4,7 +4,7 @@ import Alpine from 'alpinejs';
 import Sortable from 'sortablejs';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
-import { createIcons, Archive, ArrowRight, CalendarDays, CircleCheck, Funnel, Inbox, Layers3, Lightbulb, ListTodo, Package, Pencil, Plus, Search, Trash2, UserRound, UsersRound, UserX } from 'lucide';
+import { createIcons, Archive, ArrowRight, AtSign, CalendarDays, CircleCheck, Funnel, House, Inbox, Layers3, Lightbulb, ListTodo, Menu, Package, Pencil, Plus, Search, Settings2, Trash2, UserRound, UsersRound, UserX } from 'lucide';
 
 window.Alpine = Alpine;
 
@@ -19,7 +19,13 @@ Alpine.store('theme', {
 
 Alpine.start();
 
-createIcons({ icons: { Archive, ArrowRight, CalendarDays, CircleCheck, Funnel, Inbox, Layers3, Lightbulb, ListTodo, Package, Pencil, Plus, Search, Trash2, UserRound, UsersRound, UserX }, attrs: { 'stroke-width': 1.8 } });
+createIcons({ icons: { Archive, ArrowRight, AtSign, CalendarDays, CircleCheck, Funnel, House, Inbox, Layers3, Lightbulb, ListTodo, Menu, Package, Pencil, Plus, Search, Settings2, Trash2, UserRound, UsersRound, UserX }, attrs: { 'stroke-width': 1.8 } });
+
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).catch(() => {});
+    });
+}
 
 document.addEventListener('submit', async (event) => {
     const form = event.target;
@@ -66,6 +72,26 @@ const initTaskBoard = () => {
     const zones = document.querySelectorAll('[data-dropzone]');
     if (!zones.length) return;
 
+    const board = document.querySelector('.task-board');
+    const tabs = [...document.querySelectorAll('[data-status-tab]')];
+    const columns = [...document.querySelectorAll('[data-mobile-status]')];
+    const selectStatus = (status) => {
+        tabs.forEach((tab) => {
+            const active = tab.dataset.statusTab === status;
+            tab.classList.toggle('mobile-status-tab-active', active);
+            tab.setAttribute('aria-selected', String(active));
+            if (active && window.matchMedia('(max-width: 1023px)').matches) {
+                tab.scrollIntoView({ block: 'nearest', inline: 'center' });
+            }
+        });
+        columns.forEach((column) => column.classList.toggle('mobile-status-active', column.dataset.mobileStatus === status));
+    };
+    if (board && tabs.length) {
+        selectStatus(board.dataset.initialStatus);
+        board.classList.add('task-board-enhanced');
+        tabs.forEach((tab) => tab.addEventListener('click', () => selectStatus(tab.dataset.statusTab)));
+    }
+
     const token = document.querySelector('meta[name="csrf-token"]')?.content;
     let isSorting = false;
 
@@ -74,12 +100,21 @@ const initTaskBoard = () => {
             if (isSorting || event.target.closest('.drag-handle')) return;
             document.getElementById(card.dataset.dialogTarget)?.showModal();
         });
+        card.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            document.getElementById(card.dataset.dialogTarget)?.showModal();
+        });
     });
 
+    const desktop = window.matchMedia('(min-width: 1024px)');
+    const sortables = [];
     zones.forEach((zone) => {
-        Sortable.create(zone, {
+        sortables.push(Sortable.create(zone, {
             group: 'tasks',
             draggable: '.task-card',
+            handle: '.drag-handle',
+            disabled: !desktop.matches,
             animation: 180,
             ghostClass: 'task-card-ghost',
             chosenClass: 'task-card-chosen',
@@ -104,15 +139,18 @@ const initTaskBoard = () => {
                 const status = event.to?.dataset.dropzone;
                 if (!card?.dataset.updateUrl || !token || !status) return;
 
-                const response = await fetch(card.dataset.updateUrl, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': token },
-                    body: JSON.stringify({ status }),
-                });
-
-                if (response.ok) {
-                    location.reload();
-                    return;
+                try {
+                    const response = await fetch(card.dataset.updateUrl, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': token },
+                        body: JSON.stringify({ status }),
+                    });
+                    if (response.ok) {
+                        location.reload();
+                        return;
+                    }
+                } catch {
+                    // Restore the card and show the same actionable error below.
                 }
 
                 event.from.insertBefore(card, event.from.children[event.oldIndex] || null);
@@ -125,8 +163,9 @@ const initTaskBoard = () => {
                     color: document.documentElement.classList.contains('dark') ? '#e2e8f0' : '#1e293b',
                 });
             },
-        });
+        }));
     });
+    desktop.addEventListener('change', (event) => sortables.forEach((sortable) => sortable.option('disabled', !event.matches)));
 };
 
 if (document.readyState === 'loading') {

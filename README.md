@@ -77,6 +77,14 @@ npm run dev
 
 Open `http://127.0.0.1:8000`.
 
+## Install as a PWA
+
+IniBisa can be installed from a supported browser. On Android or desktop Chrome, open the site and choose **Install app** from the browser menu. On iPhone, open it in Safari and choose **Share → Add to Home Screen**.
+
+For deployment, serve the site over HTTPS and run `npm run build`. Browser installation and service workers require a secure origin; `localhost` and `127.0.0.1` also work for local development.
+
+When offline, the app shows a retry page. Workspace data and changes require a connection and are never stored in the service worker cache.
+
 ## Demo Login
 
 ```text
@@ -116,6 +124,7 @@ Backlog -> Planned -> In Progress -> Review -> Done
 ```
 
 Drag a task from its `⠿` handle to move it between columns.
+On mobile, switch status with the tabs and open a task to change its status.
 
 ## Access Control
 
