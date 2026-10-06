@@ -43,13 +43,16 @@ self.addEventListener('push', (event) => {
     const url = new URL(payload.url || '/tasks', self.location.origin);
     if (url.origin !== self.location.origin || url.pathname !== '/tasks') url.href = `${self.location.origin}/tasks`;
 
-    event.waitUntil(self.registration.showNotification(payload.title || 'IniBisa', {
-        body: payload.body || 'Ada pembaruan tugas.',
-        icon: '/icons/pwa-192.png',
-        badge: '/icons/favicon-32.png',
-        tag: payload.tag || 'inibisa-task',
-        data: { url: url.href },
-    }));
+    event.waitUntil(Promise.all([
+        self.registration.showNotification(payload.title || 'IniBisa', {
+            body: payload.body || 'Ada pembaruan tugas.',
+            icon: '/icons/pwa-192.png',
+            badge: '/icons/favicon-32.png',
+            tag: payload.tag || 'inibisa-task',
+            data: { url: url.href },
+        }),
+        self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => clients.forEach((client) => client.postMessage({ type: 'push-received', sound: payload.sound }))),
+    ]));
 });
 
 self.addEventListener('notificationclick', (event) => {

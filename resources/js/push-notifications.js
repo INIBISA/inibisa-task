@@ -6,9 +6,11 @@ const toUint8Array = (base64url) => {
 export const initPushNotifications = (Swal) => {
     const buttons = [...document.querySelectorAll('[data-push-toggle]')];
     const testButtons = [...document.querySelectorAll('[data-push-test]')];
+    const soundButtons = [...document.querySelectorAll('[data-notification-sound]')];
     if (!buttons.length || buttons[0].dataset.pushInitialized) return;
     buttons.forEach((button) => { button.dataset.pushInitialized = 'true'; });
     testButtons.forEach((button) => { button.dataset.pushInitialized = 'true'; });
+    soundButtons.forEach((button) => { button.dataset.pushInitialized = 'true'; });
 
     const status = document.querySelector('[data-push-status]');
     const publicKey = document.querySelector('meta[name="push-public-key"]')?.content;
@@ -17,6 +19,50 @@ export const initPushNotifications = (Swal) => {
     const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     let currentSubscription = null;
     let busy = false;
+    const soundFiles = {
+        created: '/sounds/task-new.wav',
+        updated: '/sounds/task-update.wav',
+        commented: '/sounds/comment.wav',
+        comment: '/sounds/comment.wav',
+        reply: '/sounds/reply.wav',
+        subtask_created: '/sounds/task-update.wav',
+        subtask_completed: '/sounds/done.wav',
+    };
+
+    const soundEnabled = () => localStorage.getItem('inibisa-notification-sound') === '1';
+    const updateSoundButtons = () => soundButtons.forEach((button) => {
+        button.innerHTML = `<i data-lucide="volume-${soundEnabled() ? '2' : 'x'}"></i> ${soundEnabled() ? 'Suara aktif' : 'Aktifkan suara'}`;
+        button.setAttribute('aria-pressed', String(soundEnabled()));
+    });
+    const playSound = (kind = 'updated') => {
+        if (!soundEnabled() || document.visibilityState !== 'visible') return;
+        try {
+            const audio = new Audio(soundFiles[kind] || soundFiles.updated);
+            audio.volume = 0.45;
+            audio.play().catch(() => {});
+        } catch { /* Audio is optional and must never affect notifications. */ }
+    };
+
+    updateSoundButtons();
+    soundButtons.forEach((button) => button.addEventListener('click', async () => {
+        try {
+            const audio = new Audio(soundFiles.created);
+            audio.volume = 0;
+            await audio.play();
+            audio.pause();
+            localStorage.setItem('inibisa-notification-sound', soundEnabled() ? '0' : '1');
+            updateSoundButtons();
+            if (soundEnabled()) playSound('created');
+        } catch {
+            await Swal.fire({ icon: 'info', title: 'Suara belum tersedia', text: 'Browser memblokir audio. Coba lagi setelah berinteraksi dengan halaman.', confirmButtonColor: '#2563eb' });
+        }
+    }));
+    if (!navigator.serviceWorker.__inibisaSoundListener) {
+        navigator.serviceWorker.addEventListener('message', (event) => {
+            if (event.data?.type === 'push-received') playSound(event.data.sound);
+        });
+        navigator.serviceWorker.__inibisaSoundListener = true;
+    }
 
     const setStatus = (message, active = false) => {
         if (status) status.textContent = message;

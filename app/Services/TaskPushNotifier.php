@@ -57,6 +57,7 @@ class TaskPushNotifier
                     'subtask_completed' => "{$actor->name} menyelesaikan subtugas: {$detail}",
                     default => "{$actor->name} memperbarui {$task->title}".($detail ? ": {$detail}" : ''),
                 },
+                'sound' => $action === 'commented' ? ($comment?->parent_id ? 'reply' : 'comment') : $action,
                 'url' => route('tasks', absolute: false).'?task='.$task->id.($comment ? '&comment='.$comment->id : ''),
                 'tag' => $comment ? 'task-'.$task->id.'-comment-'.$comment->id : 'task-'.$task->id,
             ], JSON_THROW_ON_ERROR);
