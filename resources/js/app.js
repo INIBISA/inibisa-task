@@ -32,6 +32,21 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
 initPushNotifications(Swal);
 
 const commentToken = document.querySelector('meta[name="csrf-token"]')?.content;
+const pending = (element, active) => {
+    if (!element) return;
+    element.classList.toggle('is-loading', active);
+    element.setAttribute('aria-busy', String(active));
+};
+const pendingButton = (button, active) => {
+    if (!button) return;
+    button.disabled = active;
+    button.classList.toggle('is-loading', active);
+    button.setAttribute('aria-busy', String(active));
+    let spinner = button.querySelector('.loading-spinner');
+    if (active && !spinner) button.insertAdjacentHTML('afterbegin', '<span class="loading-spinner" aria-hidden="true"></span>');
+    if (!active) spinner?.remove();
+};
+const pageLoading = (active) => document.querySelector('[data-page-loading]')?.classList.toggle('is-loading', active);
 const replyForm = (parentId) => `<form class="task-comment-form mt-3" data-comment-form enctype="multipart/form-data"><input type="hidden" name="parent_id" value="${parentId}"><label class="sr-only">Tulis balasan</label><textarea class="field min-h-20 w-full resize-y" name="body" maxlength="5000" placeholder="Tulis balasan..." data-comment-body></textarea><div class="mt-2 flex items-center justify-between gap-3"><label class="action-button cursor-pointer"><i data-lucide="image-plus"></i> Gambar<input class="sr-only" type="file" name="images[]" accept="image/jpeg,image/png,image/webp,image/gif" multiple data-comment-images></label><div class="flex gap-2"><button type="button" class="action-button" data-cancel-reply>Batal</button><button class="brand-button min-h-8 px-3" type="submit"><i data-lucide="send" class="h-3.5 w-3.5"></i> Balas</button></div></div><div class="task-comment-previews" data-comment-previews></div><p class="mt-2 text-xs text-rose-600" data-comment-error aria-live="polite"></p></form>`;
 
 const previewCommentImages = (input) => {
@@ -80,7 +95,8 @@ document.addEventListener('submit', async (event) => {
     if (!url || !body || !commentToken) return;
 
     error.textContent = '';
-    submit.disabled = true;
+    pendingButton(submit, true);
+    pending(form, true);
     try {
         const response = await fetch(url, {
             method: 'POST',
@@ -113,7 +129,8 @@ document.addEventListener('submit', async (event) => {
     } catch {
         error.textContent = 'Koneksi bermasalah. Coba lagi.';
     } finally {
-        submit.disabled = false;
+        pendingButton(submit, false);
+        pending(form, false);
     }
 });
 
@@ -218,6 +235,26 @@ document.addEventListener('submit', async (event) => {
     }
 });
 
+document.addEventListener('submit', (event) => {
+    const form = event.target;
+    if (!(form instanceof HTMLFormElement) || form.dataset.submitting || (form.dataset.confirmTitle && !form.dataset.confirmed) || form.matches('[data-comment-form]')) return;
+    form.dataset.submitting = 'true';
+    pending(form, true);
+    form.querySelectorAll('button[type="submit"], input[type="submit"]').forEach((button) => {
+        button.disabled = true;
+        button.insertAdjacentHTML('afterbegin', '<span class="loading-spinner" aria-hidden="true"></span>');
+    });
+    pageLoading(true);
+});
+
+document.addEventListener('click', (event) => {
+    const link = event.target.closest('a[href]');
+    if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || link.target || link.hasAttribute('download')) return;
+    const url = new URL(link.href, location.href);
+    if (url.origin === location.origin && url.href !== location.href) pageLoading(true);
+});
+window.addEventListener('pageshow', () => pageLoading(false));
+
 const flash = document.getElementById('workspace-flash');
 if (flash?.dataset.message) {
     Swal.fire({
@@ -272,8 +309,26 @@ const initTaskBoard = () => {
         });
     });
 
+    const target = new URLSearchParams(location.search);
+    const taskId = target.get('task');
+    const commentId = target.get('comment');
+    const dialog = taskId && document.getElementById(`task-${taskId}`);
+    if (dialog) {
+        dialog.showModal();
+        const comment = commentId && dialog.querySelector(`[data-comment-id="${CSS.escape(commentId)}"]`);
+        if (comment) {
+            comment.classList.add('task-comment-target');
+            comment.scrollIntoView({ block: 'center' });
+            comment.focus({ preventScroll: true });
+        }
+        target.delete('task');
+        target.delete('comment');
+        history.replaceState({}, '', `${location.pathname}${target.size ? `?${target}` : ''}`);
+    }
+
     const desktop = window.matchMedia('(min-width: 1024px)');
     const sortables = [];
+    let isSavingTask = false;
     zones.forEach((zone) => {
         sortables.push(Sortable.create(zone, {
             group: 'tasks',
@@ -303,6 +358,13 @@ const initTaskBoard = () => {
                 const card = event.item;
                 const status = event.to?.dataset.dropzone;
                 if (!card?.dataset.updateUrl || !token || !status) return;
+                if (isSavingTask) {
+                    event.from.insertBefore(card, event.from.children[event.oldIndex] || null);
+                    return;
+                }
+                isSavingTask = true;
+                pending(card, true);
+                sortables.forEach((sortable) => sortable.option('disabled', true));
 
                 try {
                     const response = await fetch(card.dataset.updateUrl, {
@@ -319,6 +381,9 @@ const initTaskBoard = () => {
                 }
 
                 event.from.insertBefore(card, event.from.children[event.oldIndex] || null);
+                isSavingTask = false;
+                pending(card, false);
+                sortables.forEach((sortable) => sortable.option('disabled', !desktop.matches));
                 Swal.fire({
                     icon: 'error',
                     title: 'Gagal memindahkan tugas',

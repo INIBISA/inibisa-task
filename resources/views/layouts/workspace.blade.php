@@ -13,6 +13,7 @@
 </head>
 
 <body class="min-h-screen bg-[#f6fbff] text-slate-800" x-data="{ moreOpen: false }" @keydown.escape.window="moreOpen = false">
+    <div class="page-loading" data-page-loading role="status" aria-live="polite"><span class="sr-only">Memuat halaman...</span></div>
     <header class="workspace-header sticky top-0 z-20 border-b border-cyan-100 bg-white/95 backdrop-blur">
         <div class="grid h-16 grid-cols-[1fr_auto] items-center gap-3 px-4 sm:px-5 lg:grid-cols-[1fr_auto_1fr] xl:px-9">
             <a href="{{ route('dashboard') }}" class="flex shrink-0 items-center gap-2"><x-application-logo

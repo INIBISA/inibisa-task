@@ -45,7 +45,7 @@ class TaskCommentController extends Controller
             throw $exception;
         }
         $comment->load(['user', 'attachments']);
-        $pushNotifier->send($task, $request->user()->id, 'commented');
+        $pushNotifier->send($task, $request->user(), 'commented', $comment);
 
         return response()->json([
             'ok' => true,

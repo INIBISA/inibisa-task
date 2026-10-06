@@ -60,7 +60,7 @@ class WorkspaceController extends Controller
         $task = Task::create($data + ['created_by' => $request->user()->id]);
         $task->assignees()->sync($data['assignees'] ?? []);
         $this->activity($request, 'membuat tugas', $task);
-        $pushNotifier->send($task, $request->user()->id, 'created');
+        $pushNotifier->send($task, $request->user(), 'created');
 
         return back()->with('success', 'Tugas dibuat.');
     }
@@ -76,7 +76,8 @@ class WorkspaceController extends Controller
         }
         $this->activity($request, 'memperbarui tugas', $task);
         if ($task->wasChanged() || $assigneesChanged) {
-            $pushNotifier->send($task, $request->user()->id, 'updated');
+            $detail = isset($data['status']) ? 'status menjadi '.$task->status : ($assigneesChanged ? 'penugasan diperbarui' : 'detail tugas diperbarui');
+            $pushNotifier->send($task, $request->user(), 'updated', detail: $detail);
         }
 
         return back()->with('success', 'Tugas diperbarui.');
@@ -93,8 +94,8 @@ class WorkspaceController extends Controller
     public function subtask(Request $request, Task $task, TaskPushNotifier $pushNotifier)
     {
         $data = $request->validate(['title' => 'required|string|max:255']);
-        $task->subtasks()->create($data);
-        $pushNotifier->send($task, $request->user()->id, 'updated');
+        $subtask = $task->subtasks()->create($data);
+        $pushNotifier->send($task, $request->user(), 'subtask_created', detail: $subtask->title);
 
         return back();
     }
@@ -103,7 +104,7 @@ class WorkspaceController extends Controller
     {
         $task = $subtask->task;
         $subtask->update(['is_completed' => ! $subtask->is_completed]);
-        $pushNotifier->send($task, $request->user()->id, 'updated');
+        $pushNotifier->send($task, $request->user(), 'subtask_completed', detail: $subtask->title);
 
         return back();
     }

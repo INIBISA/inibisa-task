@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\PushSubscription;
+use App\Models\Comment;
 use App\Models\Task;
 use App\Models\User;
 use GuzzleHttp\Client;
@@ -15,7 +16,7 @@ class TaskPushNotifier
 {
     public function __construct(private ?ClientInterface $client = null) {}
 
-    public function send(Task $task, int $actorId, string $action): void
+    public function send(Task $task, User $actor, string $action, ?Comment $comment = null, ?string $detail = null): void
     {
         if (! config('push.public_key') || ! config('push.private_key')) {
             return;
@@ -24,7 +25,7 @@ class TaskPushNotifier
         $subscriptions = PushSubscription::query()
             ->join('users', 'users.id', '=', 'push_subscriptions.user_id')
             ->where('users.is_active', true)
-            ->where('push_subscriptions.user_id', '!=', $actorId)
+            ->where('push_subscriptions.user_id', '!=', $actor->id)
             ->select('push_subscriptions.*')
             ->get();
         if ($subscriptions->isEmpty()) {
@@ -39,15 +40,25 @@ class TaskPushNotifier
             ]], ['TTL' => 86400, 'urgency' => 'normal', 'contentType' => 'application/json'], $this->client ?? new Client(['timeout' => 5, 'connect_timeout' => 3, 'allow_redirects' => false]));
             $sender->setReuseVAPIDHeaders(true);
 
+            $commentText = $comment ? $this->excerpt($comment->body) : null;
+            $imageCount = $comment?->attachments()->count() ?? 0;
             $payload = json_encode([
                 'title' => match ($action) {
                     'created' => 'Tugas baru',
-                    'commented' => 'Komentar baru',
+                    'commented' => $comment?->parent_id ? 'Balasan baru' : 'Komentar baru',
+                    'subtask_created' => 'Subtugas baru',
+                    'subtask_completed' => 'Subtugas selesai',
                     default => 'Tugas diperbarui',
                 },
-                'body' => $task->title,
-                'url' => route('tasks', absolute: false).'?q='.rawurlencode($task->title),
-                'tag' => 'task-'.$task->id,
+                'body' => match ($action) {
+                    'created' => "{$actor->name} membuat tugas: {$task->title}",
+                    'commented' => $commentText ? "{$actor->name}: {$commentText}" : "{$actor->name} mengirim {$imageCount} gambar di {$task->title}",
+                    'subtask_created' => "{$actor->name} menambahkan subtugas: {$detail}",
+                    'subtask_completed' => "{$actor->name} menyelesaikan subtugas: {$detail}",
+                    default => "{$actor->name} memperbarui {$task->title}".($detail ? ": {$detail}" : ''),
+                },
+                'url' => route('tasks', absolute: false).'?task='.$task->id.($comment ? '&comment='.$comment->id : ''),
+                'tag' => $comment ? 'task-'.$task->id.'-comment-'.$comment->id : 'task-'.$task->id,
             ], JSON_THROW_ON_ERROR);
 
             foreach ($subscriptions as $subscription) {
@@ -72,6 +83,13 @@ class TaskPushNotifier
         } catch (\Throwable $exception) {
             Log::warning('Push notification could not be sent', ['exception' => $exception]);
         }
+    }
+
+    private function excerpt(string $text): string
+    {
+        $text = trim(preg_replace('/\s+/', ' ', strip_tags($text)));
+
+        return mb_strimwidth($text, 0, 140, '...');
     }
 
     public function sendTest(User $user): bool

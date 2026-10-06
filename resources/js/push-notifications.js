@@ -23,6 +23,8 @@ export const initPushNotifications = (Swal) => {
             if (label === button) button.textContent = active ? 'Matikan notifikasi' : 'Aktifkan notifikasi';
             else label.firstChild.textContent = active ? 'Matikan notifikasi' : 'Aktifkan notifikasi';
             button.disabled = busy;
+            button.classList.toggle('is-loading', busy);
+            button.setAttribute('aria-busy', String(busy));
         });
     };
 
@@ -64,7 +66,7 @@ export const initPushNotifications = (Swal) => {
         }
 
         busy = true;
-        buttons.forEach((item) => { item.disabled = true; });
+        buttons.forEach((item) => { item.disabled = true; item.classList.add('is-loading'); item.setAttribute('aria-busy', 'true'); });
         try {
             // iOS requires the permission request to begin in the click gesture.
             if (!currentSubscription && Notification.permission !== 'granted') {
@@ -92,7 +94,7 @@ export const initPushNotifications = (Swal) => {
             await Swal.fire({ icon: 'error', title: 'Notifikasi gagal', text: error.message, confirmButtonColor: '#2563eb' });
         } finally {
             busy = false;
-            buttons.forEach((item) => { item.disabled = false; });
+            buttons.forEach((item) => { item.disabled = false; item.classList.remove('is-loading'); item.setAttribute('aria-busy', 'false'); });
         }
     }));
 
@@ -100,7 +102,9 @@ export const initPushNotifications = (Swal) => {
     else refresh();
 
     testButtons.forEach((button) => button.addEventListener('click', async () => {
-        button.disabled = true;
+        if (busy) return;
+        busy = true;
+        testButtons.forEach((item) => { item.disabled = true; item.classList.add('is-loading'); item.setAttribute('aria-busy', 'true'); });
         try {
             const response = await fetch('/push-subscriptions/test', { method: 'POST', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf } });
             const data = await response.json();
@@ -109,7 +113,8 @@ export const initPushNotifications = (Swal) => {
         } catch (error) {
             await Swal.fire({ icon: 'error', title: 'Notifikasi tes gagal', text: error.message, confirmButtonColor: '#2563eb' });
         } finally {
-            button.disabled = false;
+            busy = false;
+            testButtons.forEach((item) => { item.disabled = false; item.classList.remove('is-loading'); item.setAttribute('aria-busy', 'false'); });
         }
     }));
 
