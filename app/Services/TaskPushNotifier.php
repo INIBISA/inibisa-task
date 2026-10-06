@@ -22,17 +22,17 @@ class TaskPushNotifier
             return;
         }
 
-        $subscriptions = PushSubscription::query()
-            ->join('users', 'users.id', '=', 'push_subscriptions.user_id')
-            ->where('users.is_active', true)
-            ->where('push_subscriptions.user_id', '!=', $actor->id)
-            ->select('push_subscriptions.*')
-            ->get();
-        if ($subscriptions->isEmpty()) {
-            return;
-        }
-
         try {
+            $subscriptions = PushSubscription::query()
+                ->join('users', 'users.id', '=', 'push_subscriptions.user_id')
+                ->where('users.is_active', true)
+                ->where('push_subscriptions.user_id', '!=', $actor->id)
+                ->select('push_subscriptions.*')
+                ->get();
+            if ($subscriptions->isEmpty()) {
+                return;
+            }
+
             $sender = new WebPush(['VAPID' => [
                 'subject' => config('push.subject'),
                 'publicKey' => config('push.public_key'),

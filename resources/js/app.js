@@ -1,4 +1,5 @@
 import './bootstrap';
+import * as Turbo from '@hotwired/turbo';
 
 import Alpine from 'alpinejs';
 import Sortable from 'sortablejs';
@@ -21,15 +22,11 @@ Alpine.store('theme', {
 Alpine.start();
 
 const lucideIcons = { Archive, ArrowRight, AtSign, Bell, BriefcaseBusiness, CalendarDays, Camera, CircleCheck, Download, Funnel, House, ImagePlus, Inbox, Layers3, Lightbulb, ListTodo, Menu, Music2, Package, Pencil, Plus, Reply, Search, Send, Settings2, ThumbsUp, Trash2, UserRound, UsersRound, UserX, Video };
-createIcons({ icons: lucideIcons, attrs: { 'stroke-width': 1.8 } });
-
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).catch(() => {});
     });
 }
-
-initPushNotifications(Swal);
 
 const commentToken = document.querySelector('meta[name="csrf-token"]')?.content;
 const pending = (element, active) => {
@@ -255,8 +252,9 @@ document.addEventListener('click', (event) => {
 });
 window.addEventListener('pageshow', () => pageLoading(false));
 
-const flash = document.getElementById('workspace-flash');
-if (flash?.dataset.message) {
+const showFlash = () => {
+    const flash = document.getElementById('workspace-flash');
+    if (!flash?.dataset.message) return;
     Swal.fire({
         toast: true,
         position: 'top-end',
@@ -268,11 +266,12 @@ if (flash?.dataset.message) {
         background: document.documentElement.classList.contains('dark') ? '#17232d' : '#fff',
         color: document.documentElement.classList.contains('dark') ? '#e2e8f0' : '#1e293b',
     });
-}
+};
 
 const initTaskBoard = () => {
     const zones = document.querySelectorAll('[data-dropzone]');
-    if (!zones.length) return;
+    if (!zones.length || document.body.dataset.taskBoardInitialized) return;
+    document.body.dataset.taskBoardInitialized = 'true';
 
     const board = document.querySelector('.task-board');
     const tabs = [...document.querySelectorAll('[data-status-tab]')];
@@ -335,14 +334,14 @@ const initTaskBoard = () => {
             draggable: '.task-card',
             handle: '.drag-handle',
             disabled: !desktop.matches,
-            animation: 180,
+            animation: 140,
             ghostClass: 'task-card-ghost',
             chosenClass: 'task-card-chosen',
             dragClass: 'task-card-dragging',
-            forceFallback: true,
-            fallbackOnBody: true,
             swapThreshold: 0.65,
-            emptyInsertThreshold: 32,
+            emptyInsertThreshold: 48,
+            delayOnTouchOnly: true,
+            fallbackTolerance: 4,
             onStart() {
                 isSorting = true;
             },
@@ -358,6 +357,7 @@ const initTaskBoard = () => {
                 const card = event.item;
                 const status = event.to?.dataset.dropzone;
                 if (!card?.dataset.updateUrl || !token || !status) return;
+                if (event.from === event.to && event.oldIndex === event.newIndex) return;
                 if (isSavingTask) {
                     event.from.insertBefore(card, event.from.children[event.oldIndex] || null);
                     return;
@@ -366,18 +366,19 @@ const initTaskBoard = () => {
                 pending(card, true);
                 sortables.forEach((sortable) => sortable.option('disabled', true));
 
+                let response;
                 try {
-                    const response = await fetch(card.dataset.updateUrl, {
+                    response = await fetch(card.dataset.updateUrl, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': token },
                         body: JSON.stringify({ status }),
                     });
-                    if (response.ok) {
-                        location.reload();
-                        return;
-                    }
                 } catch {
                     // Restore the card and show the same actionable error below.
+                }
+                if (response?.ok) {
+                    Turbo.visit(location.href, { action: 'replace' });
+                    return;
                 }
 
                 event.from.insertBefore(card, event.from.children[event.oldIndex] || null);
@@ -398,8 +399,12 @@ const initTaskBoard = () => {
     desktop.addEventListener('change', (event) => sortables.forEach((sortable) => sortable.option('disabled', !event.matches)));
 };
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initTaskBoard);
-} else {
+const initPage = () => {
+    pageLoading(false);
+    createIcons({ icons: lucideIcons, attrs: { 'stroke-width': 1.8 } });
+    initPushNotifications(Swal);
     initTaskBoard();
-}
+    showFlash();
+};
+
+document.addEventListener('turbo:load', initPage);

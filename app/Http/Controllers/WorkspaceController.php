@@ -80,6 +80,10 @@ class WorkspaceController extends Controller
             $pushNotifier->send($task, $request->user(), 'updated', detail: $detail);
         }
 
+        if ($request->expectsJson()) {
+            return response()->json(['status' => $task->status]);
+        }
+
         return back()->with('success', 'Tugas diperbarui.');
     }
 

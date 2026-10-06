@@ -6,7 +6,9 @@ const toUint8Array = (base64url) => {
 export const initPushNotifications = (Swal) => {
     const buttons = [...document.querySelectorAll('[data-push-toggle]')];
     const testButtons = [...document.querySelectorAll('[data-push-test]')];
-    if (!buttons.length) return;
+    if (!buttons.length || buttons[0].dataset.pushInitialized) return;
+    buttons.forEach((button) => { button.dataset.pushInitialized = 'true'; });
+    testButtons.forEach((button) => { button.dataset.pushInitialized = 'true'; });
 
     const status = document.querySelector('[data-push-status]');
     const publicKey = document.querySelector('meta[name="push-public-key"]')?.content;

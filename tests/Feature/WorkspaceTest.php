@@ -73,6 +73,18 @@ class WorkspaceTest extends TestCase
         $this->assertDatabaseHas('tasks', ['id' => $task->id, 'status' => 'Done']);
     }
 
+    public function test_task_drag_update_returns_json_after_persisting(): void
+    {
+        $user = User::factory()->create();
+        $task = Task::create(['title' => 'Geser', 'created_by' => $user->id]);
+
+        $this->actingAs($user)->putJson(route('tasks.update', $task), ['status' => 'Done'])
+            ->assertOk()
+            ->assertJson(['status' => 'Done']);
+
+        $this->assertDatabaseHas('tasks', ['id' => $task->id, 'status' => 'Done']);
+    }
+
     public function test_dashboard_shows_each_members_tasks_to_admin_and_only_own_tasks_to_member(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
