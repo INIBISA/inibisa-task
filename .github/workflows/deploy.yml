@@ -98,11 +98,10 @@ jobs:
           echo "=== Database migration ==="
 
           "${PHP_CMD[@]}" artisan migrate --force
-
+          
+          echo "=== Push application keys ==="
+          
+          "${PHP_CMD[@]}" artisan push:keys
+          
           echo "=== Clear Laravel caches ==="
-
-          "${PHP_CMD[@]}" artisan optimize:clear
-          "${PHP_CMD[@]}" artisan cache:clear
-
-          echo "=== DEPLOY SUCCESS ==="
           EOF
