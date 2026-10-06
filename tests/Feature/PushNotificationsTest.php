@@ -10,9 +10,9 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
+use GuzzleHttp\Psr7\Response;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Minishlink\WebPush\VAPID;
-use GuzzleHttp\Psr7\Response;
 use Tests\TestCase;
 
 class PushNotificationsTest extends TestCase
@@ -93,5 +93,46 @@ class PushNotificationsTest extends TestCase
         ])->assertRedirect();
         $this->assertCount(4, $history);
         $this->assertDatabaseMissing('push_subscriptions', ['user_id' => $assignee->id]);
+    }
+
+    public function test_push_test_requires_the_current_user_to_have_a_subscription(): void
+    {
+        config()->set('push.public_key', 'configured');
+        config()->set('push.private_key', 'configured');
+        $user = User::factory()->create();
+
+        $this->postJson(route('push-subscriptions.test'))->assertUnauthorized();
+        $this->actingAs($user)->postJson(route('push-subscriptions.test'))
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'Aktifkan notifikasi di perangkat ini terlebih dahulu.');
+    }
+
+    public function test_push_test_sends_only_to_the_current_users_devices(): void
+    {
+        $keys = VAPID::createVapidKeys();
+        config()->set('push.public_key', $keys['publicKey']);
+        config()->set('push.private_key', $keys['privateKey']);
+        config()->set('push.subject', 'https://task.example.test');
+        $user = User::factory()->create();
+        $other = User::factory()->create();
+        $history = [];
+        $handler = HandlerStack::create(new MockHandler([new Response(201)]));
+        $handler->push(Middleware::history($history));
+        $this->app->instance(TaskPushNotifier::class, new TaskPushNotifier(new Client(['handler' => $handler])));
+
+        foreach ([$user, $other] as $subscriber) {
+            PushSubscription::create([
+                'user_id' => $subscriber->id,
+                'endpoint' => 'https://push.example.test/device-'.$subscriber->id,
+                'endpoint_hash' => hash('sha256', 'https://push.example.test/device-'.$subscriber->id),
+                'p256dh' => $keys['publicKey'],
+                'auth' => rtrim(strtr(base64_encode(random_bytes(16)), '+/', '-_'), '='),
+            ]);
+        }
+
+        $this->actingAs($user)->postJson(route('push-subscriptions.test'))->assertOk();
+
+        $this->assertCount(1, $history);
+        $this->assertSame('https://push.example.test/device-'.$user->id, (string) $history[0]['request']->getUri());
     }
 }

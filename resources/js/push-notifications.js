@@ -5,6 +5,7 @@ const toUint8Array = (base64url) => {
 
 export const initPushNotifications = (Swal) => {
     const buttons = [...document.querySelectorAll('[data-push-toggle]')];
+    const testButtons = [...document.querySelectorAll('[data-push-test]')];
     if (!buttons.length) return;
 
     const status = document.querySelector('[data-push-status]');
@@ -97,6 +98,20 @@ export const initPushNotifications = (Swal) => {
 
     if (supported && publicKey) refresh().catch(() => setStatus('Status notifikasi belum dapat diperiksa.'));
     else refresh();
+
+    testButtons.forEach((button) => button.addEventListener('click', async () => {
+        button.disabled = true;
+        try {
+            const response = await fetch('/push-subscriptions/test', { method: 'POST', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf } });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Notifikasi tes gagal dikirim.');
+            await Swal.fire({ icon: 'success', title: 'Notifikasi tes dikirim', text: 'Cek notifikasi di perangkat ini.', confirmButtonColor: '#2563eb' });
+        } catch (error) {
+            await Swal.fire({ icon: 'error', title: 'Notifikasi tes gagal', text: error.message, confirmButtonColor: '#2563eb' });
+        } finally {
+            button.disabled = false;
+        }
+    }));
 
     document.querySelectorAll('form[action$="/logout"]').forEach((form) => form.addEventListener('submit', async (event) => {
         if (!currentSubscription) return;

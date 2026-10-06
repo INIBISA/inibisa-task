@@ -6,8 +6,8 @@ use App\Models\Audience;
 use App\Models\Idea;
 use App\Models\Product;
 use App\Models\SocialMediaAccount;
-use App\Models\User;
 use App\Models\Task;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -31,7 +31,7 @@ class WorkspaceTest extends TestCase
     {
         $user = User::factory()->create();
         $audience = Audience::create(['name' => 'Pacaran', 'slug' => 'pacaran']);
-        $idea = \App\Models\Idea::create(['title' => 'Love Letter', 'audience_id' => $audience->id, 'submitted_by' => $user->id]);
+        $idea = Idea::create(['title' => 'Love Letter', 'audience_id' => $audience->id, 'submitted_by' => $user->id]);
 
         $this->actingAs($user)->post(route('ideas.convert', $idea))->assertRedirect(route('products'));
 
@@ -91,14 +91,16 @@ class WorkspaceTest extends TestCase
         $member = User::factory()->create(['role' => 'member']);
 
         $this->actingAs($member)->post(route('social-media-accounts.store'), [
-            'platform' => 'Instagram', 'name' => '@inibisa', 'url' => 'https://instagram.com/inibisa',
+            'platform' => 'TikTok', 'name' => '@inibisa',
             'login_email' => 'social@example.test', 'password' => 'secret-password',
         ])->assertRedirect();
 
         $account = SocialMediaAccount::firstOrFail();
+        $this->assertSame('inibisa', $account->name);
+        $this->assertSame('https://www.tiktok.com/@inibisa', $account->url);
         $this->assertSame('secret-password', $account->password);
         $this->assertDatabaseMissing('social_media_accounts', ['id' => $account->id, 'password' => 'secret-password']);
-        $this->actingAs($member)->get(route('social-media-accounts'))->assertSee(['Instagram', '@inibisa', 'secret-password']);
+        $this->actingAs($member)->get(route('social-media-accounts'))->assertSee(['TikTok', '@inibisa'])->assertDontSee('secret-password');
         $this->actingAs($member)->delete(route('social-media-accounts.destroy', $account))->assertRedirect();
     }
 
@@ -107,15 +109,15 @@ class WorkspaceTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
         $audience = Audience::create(['name' => 'Pacaran', 'slug' => 'pacaran']);
         $product = Product::create(['name' => 'Love', 'slug' => 'love', 'stage' => 'Idea']);
-        $idea = \App\Models\Idea::create(['title' => 'Letters', 'submitted_by' => $admin->id]);
+        $idea = Idea::create(['title' => 'Letters', 'submitted_by' => $admin->id]);
 
         $this->actingAs($admin)->put(route('audiences.update', $audience), ['name' => 'Keluarga'])->assertRedirect();
-        $this->actingAs($admin)->put(route('products.update', $product), ['name'=>'Love 2','stage'=>'Design','priority'=>'normal'])->assertRedirect();
-        $this->actingAs($admin)->put(route('ideas.update', $idea), ['title'=>'Letters 2','status'=>'Discuss'])->assertRedirect();
+        $this->actingAs($admin)->put(route('products.update', $product), ['name' => 'Love 2', 'stage' => 'Design', 'priority' => 'normal'])->assertRedirect();
+        $this->actingAs($admin)->put(route('ideas.update', $idea), ['title' => 'Letters 2', 'status' => 'Discuss'])->assertRedirect();
 
-        $this->assertDatabaseHas('audiences', ['id'=>$audience->id, 'name'=>'Keluarga']);
-        $this->assertDatabaseHas('products', ['id'=>$product->id, 'name'=>'Love 2']);
-        $this->assertDatabaseHas('ideas', ['id'=>$idea->id, 'title'=>'Letters 2']);
+        $this->assertDatabaseHas('audiences', ['id' => $audience->id, 'name' => 'Keluarga']);
+        $this->assertDatabaseHas('products', ['id' => $product->id, 'name' => 'Love 2']);
+        $this->assertDatabaseHas('ideas', ['id' => $idea->id, 'title' => 'Letters 2']);
     }
 
     public function test_task_assignees_can_be_cleared_and_only_admin_can_delete_task(): void

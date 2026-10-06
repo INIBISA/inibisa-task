@@ -11,6 +11,7 @@ Route::get('/', function () {
 
 Route::middleware('auth')->group(function () {
     Route::post('/push-subscriptions', [PushSubscriptionController::class, 'store'])->name('push-subscriptions.store');
+    Route::post('/push-subscriptions/test', [PushSubscriptionController::class, 'test'])->name('push-subscriptions.test');
     Route::delete('/push-subscriptions', [PushSubscriptionController::class, 'destroy'])->name('push-subscriptions.destroy');
     Route::get('/dashboard', [WorkspaceController::class, 'dashboard'])->name('dashboard');
     Route::get('/tasks', [WorkspaceController::class, 'tasks'])->name('tasks');

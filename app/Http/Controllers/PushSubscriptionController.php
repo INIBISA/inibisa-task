@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PushSubscription;
+use App\Services\TaskPushNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -41,6 +42,14 @@ class PushSubscriptionController extends Controller
         PushSubscription::where('user_id', $request->user()->id)
             ->where('endpoint_hash', hash('sha256', $data['endpoint']))
             ->delete();
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function test(Request $request, TaskPushNotifier $pushNotifier): JsonResponse
+    {
+        abort_unless(config('push.public_key') && config('push.private_key'), 503, 'Notifikasi belum dikonfigurasi.');
+        abort_unless($pushNotifier->sendTest($request->user()), 422, 'Aktifkan notifikasi di perangkat ini terlebih dahulu.');
 
         return response()->json(['ok' => true]);
     }
