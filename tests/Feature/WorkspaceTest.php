@@ -59,7 +59,7 @@ class WorkspaceTest extends TestCase
         $this->actingAs($member)->post(route('team.store'), [])->assertForbidden();
     }
 
-    public function test_member_sees_assigned_tasks_but_cannot_edit_another_members_task(): void
+    public function test_every_member_can_see_and_update_tasks(): void
     {
         $creator = User::factory()->create();
         $assignee = User::factory()->create();
@@ -68,8 +68,9 @@ class WorkspaceTest extends TestCase
         $task->assignees()->attach($assignee);
 
         $this->actingAs($assignee)->get(route('tasks'))->assertSee('Buat logo');
-        $this->actingAs($other)->get(route('tasks'))->assertDontSee('Buat logo');
-        $this->actingAs($assignee)->put(route('tasks.update', $task), ['status' => 'Done'])->assertForbidden();
+        $this->actingAs($other)->get(route('tasks'))->assertSee('Buat logo');
+        $this->actingAs($assignee)->put(route('tasks.update', $task), ['status' => 'Done'])->assertRedirect();
+        $this->assertDatabaseHas('tasks', ['id' => $task->id, 'status' => 'Done']);
     }
 
     public function test_dashboard_shows_each_members_tasks_to_admin_and_only_own_tasks_to_member(): void

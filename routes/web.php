@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PushSubscriptionController;
+use App\Http\Controllers\CommentAttachmentController;
+use App\Http\Controllers\TaskCommentController;
 use App\Http\Controllers\WorkspaceController;
 use Illuminate\Support\Facades\Route;
 
@@ -17,6 +19,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/tasks', [WorkspaceController::class, 'tasks'])->name('tasks');
     Route::post('/tasks', [WorkspaceController::class, 'storeTask'])->name('tasks.store');
     Route::put('/tasks/{task}', [WorkspaceController::class, 'updateTask'])->name('tasks.update');
+    Route::post('/tasks/{task}/comments', [TaskCommentController::class, 'store'])->name('tasks.comments.store');
+    Route::get('/comment-attachments/{attachment}', [CommentAttachmentController::class, 'show'])->name('comment-attachments.show');
     Route::delete('/tasks/{task}', [WorkspaceController::class, 'destroyTask'])->name('tasks.destroy');
     Route::post('/tasks/{task}/subtasks', [WorkspaceController::class, 'subtask'])->name('subtasks.store');
     Route::patch('/subtasks/{subtask}', [WorkspaceController::class, 'toggleSubtask'])->name('subtasks.toggle');

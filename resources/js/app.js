@@ -4,7 +4,7 @@ import Alpine from 'alpinejs';
 import Sortable from 'sortablejs';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
-import { createIcons, Archive, ArrowRight, AtSign, Bell, BriefcaseBusiness, CalendarDays, Camera, CircleCheck, Download, Funnel, House, Inbox, Layers3, Lightbulb, ListTodo, Menu, Music2, Package, Pencil, Plus, Search, Settings2, ThumbsUp, Trash2, UserRound, UsersRound, UserX, Video } from 'lucide';
+import { createIcons, Archive, ArrowRight, AtSign, Bell, BriefcaseBusiness, CalendarDays, Camera, CircleCheck, Download, Funnel, House, ImagePlus, Inbox, Layers3, Lightbulb, ListTodo, Menu, Music2, Package, Pencil, Plus, Reply, Search, Send, Settings2, ThumbsUp, Trash2, UserRound, UsersRound, UserX, Video } from 'lucide';
 import { initPushNotifications } from './push-notifications';
 
 window.Alpine = Alpine;
@@ -20,7 +20,8 @@ Alpine.store('theme', {
 
 Alpine.start();
 
-createIcons({ icons: { Archive, ArrowRight, AtSign, Bell, BriefcaseBusiness, CalendarDays, Camera, CircleCheck, Download, Funnel, House, Inbox, Layers3, Lightbulb, ListTodo, Menu, Music2, Package, Pencil, Plus, Search, Settings2, ThumbsUp, Trash2, UserRound, UsersRound, UserX, Video }, attrs: { 'stroke-width': 1.8 } });
+const lucideIcons = { Archive, ArrowRight, AtSign, Bell, BriefcaseBusiness, CalendarDays, Camera, CircleCheck, Download, Funnel, House, ImagePlus, Inbox, Layers3, Lightbulb, ListTodo, Menu, Music2, Package, Pencil, Plus, Reply, Search, Send, Settings2, ThumbsUp, Trash2, UserRound, UsersRound, UserX, Video };
+createIcons({ icons: lucideIcons, attrs: { 'stroke-width': 1.8 } });
 
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
     window.addEventListener('load', () => {
@@ -29,6 +30,92 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
 }
 
 initPushNotifications(Swal);
+
+const commentToken = document.querySelector('meta[name="csrf-token"]')?.content;
+const replyForm = (parentId) => `<form class="task-comment-form mt-3" data-comment-form enctype="multipart/form-data"><input type="hidden" name="parent_id" value="${parentId}"><label class="sr-only">Tulis balasan</label><textarea class="field min-h-20 w-full resize-y" name="body" maxlength="5000" placeholder="Tulis balasan..." data-comment-body></textarea><div class="mt-2 flex items-center justify-between gap-3"><label class="action-button cursor-pointer"><i data-lucide="image-plus"></i> Gambar<input class="sr-only" type="file" name="images[]" accept="image/jpeg,image/png,image/webp,image/gif" multiple data-comment-images></label><div class="flex gap-2"><button type="button" class="action-button" data-cancel-reply>Batal</button><button class="brand-button min-h-8 px-3" type="submit"><i data-lucide="send" class="h-3.5 w-3.5"></i> Balas</button></div></div><div class="task-comment-previews" data-comment-previews></div><p class="mt-2 text-xs text-rose-600" data-comment-error aria-live="polite"></p></form>`;
+
+const previewCommentImages = (input) => {
+    const previews = input.closest('[data-comment-form]')?.querySelector('[data-comment-previews]');
+    if (!previews) return;
+    previews.replaceChildren(...[...input.files].slice(0, 4).map((file) => {
+        const image = document.createElement('img');
+        image.src = URL.createObjectURL(file);
+        image.alt = file.name;
+        image.onload = () => URL.revokeObjectURL(image.src);
+        return image;
+    }));
+};
+
+document.addEventListener('click', (event) => {
+    const reply = event.target.closest('[data-reply-to]');
+    if (reply) {
+        const article = reply.closest('[data-comment-id]');
+        const composer = article?.querySelector('[data-reply-composer]');
+        if (!composer || composer.children.length) return;
+        composer.innerHTML = replyForm(reply.dataset.replyTo);
+        createIcons({ icons: lucideIcons, attrs: { 'stroke-width': 1.8 } });
+        composer.querySelector('[data-comment-body]')?.focus();
+        return;
+    }
+
+    const cancel = event.target.closest('[data-cancel-reply]');
+    if (cancel) cancel.closest('[data-comment-form]')?.remove();
+});
+
+document.addEventListener('change', (event) => {
+    const input = event.target.closest('[data-comment-images]');
+    if (input) previewCommentImages(input);
+});
+
+document.addEventListener('submit', async (event) => {
+    const form = event.target.closest('[data-comment-form]');
+    if (!form) return;
+    event.preventDefault();
+
+    const dialog = form.closest('dialog');
+    const url = form.dataset.commentUrl || dialog?.querySelector('[data-comment-form][data-comment-url]')?.dataset.commentUrl;
+    const body = form.querySelector('[data-comment-body]');
+    const error = form.querySelector('[data-comment-error]');
+    const submit = form.querySelector('[type="submit"]');
+    if (!url || !body || !commentToken) return;
+
+    error.textContent = '';
+    submit.disabled = true;
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { Accept: 'application/json', 'X-CSRF-TOKEN': commentToken },
+            body: new FormData(form),
+        });
+        const payload = await response.json();
+        if (!response.ok) {
+            error.textContent = payload.errors?.body?.[0] || 'Komentar gagal dikirim.';
+            return;
+        }
+
+        const template = document.createElement('template');
+        template.innerHTML = payload.html.trim();
+        const comment = template.content.firstElementChild;
+        const list = dialog?.querySelector('[data-comment-list]');
+        if (!comment || !list) return;
+        list.querySelector('[data-comments-empty]')?.remove();
+        if (payload.parent_id) {
+            const parent = list.querySelector(`[data-comment-id="${payload.parent_id}"]`);
+            parent?.querySelector('[data-comment-children]')?.append(comment);
+        } else {
+            list.append(comment);
+        }
+        const count = dialog?.querySelector('[data-comment-count]');
+        if (count) count.textContent = String(Number(count.textContent) + 1);
+        form.closest('[data-reply-composer]') ? form.closest('[data-reply-composer]').innerHTML = '' : form.reset();
+        createIcons({ icons: lucideIcons, attrs: { 'stroke-width': 1.8 } });
+        comment.focus();
+    } catch {
+        error.textContent = 'Koneksi bermasalah. Coba lagi.';
+    } finally {
+        submit.disabled = false;
+    }
+});
 
 const installButtons = [...document.querySelectorAll('[data-install-app]')];
 const installOffer = document.querySelector('[data-install-offer]');

@@ -41,7 +41,7 @@ class PushNotificationsTest extends TestCase
         $this->assertDatabaseCount('push_subscriptions', 0);
     }
 
-    public function test_task_changes_push_only_to_active_creator_and_assignees_except_actor(): void
+    public function test_task_changes_push_to_every_active_member_except_actor(): void
     {
         $keys = VAPID::createVapidKeys();
         config()->set('push.public_key', $keys['publicKey']);
@@ -49,7 +49,7 @@ class PushNotificationsTest extends TestCase
         config()->set('push.subject', 'https://task.example.test');
 
         $history = [];
-        $handler = HandlerStack::create(new MockHandler([new Response(201), new Response(201), new Response(201), new Response(410)]));
+        $handler = HandlerStack::create(new MockHandler(array_fill(0, 9, new Response(201))));
         $handler->push(Middleware::history($history));
         $this->app->instance(TaskPushNotifier::class, new TaskPushNotifier(new Client(['handler' => $handler])));
 
@@ -71,28 +71,32 @@ class PushNotificationsTest extends TestCase
         $this->actingAs($actor)->post(route('tasks.store'), [
             'title' => 'Tugas baru', 'priority' => 'normal', 'status' => 'Backlog', 'assignees' => [$assignee->id, $inactive->id],
         ])->assertRedirect();
-        $this->assertCount(1, $history);
-        $this->assertSame('https://push.example.test/device-'.$assignee->id, (string) $history[0]['request']->getUri());
+        $this->assertCount(3, $history);
+        $this->assertSame([
+            'https://push.example.test/device-'.$creator->id,
+            'https://push.example.test/device-'.$assignee->id,
+            'https://push.example.test/device-'.$unrelated->id,
+        ], collect($history)->map(fn ($entry) => (string) $entry['request']->getUri())->sort()->values()->all());
 
         $task = Task::create(['title' => 'Tugas lama', 'created_by' => $creator->id]);
         $task->assignees()->attach([$actor->id, $assignee->id, $inactive->id]);
         $this->actingAs($actor)->put(route('tasks.update', $task), ['status' => 'Done'])->assertRedirect();
-        $this->assertCount(3, $history);
+        $this->assertCount(6, $history);
 
-        $sentTo = collect(array_slice($history, 1))->map(fn ($entry) => (string) $entry['request']->getUri())->sort()->values()->all();
+        $sentTo = collect(array_slice($history, 3))->map(fn ($entry) => (string) $entry['request']->getUri())->sort()->values()->all();
         $this->assertSame([
             'https://push.example.test/device-'.$creator->id,
             'https://push.example.test/device-'.$assignee->id,
+            'https://push.example.test/device-'.$unrelated->id,
         ], $sentTo);
 
         $this->actingAs($actor)->put(route('tasks.update', $task), ['status' => 'Done'])->assertRedirect();
-        $this->assertCount(3, $history);
+        $this->assertCount(6, $history);
 
         $this->actingAs($actor)->post(route('tasks.store'), [
             'title' => 'Tugas berikutnya', 'priority' => 'normal', 'status' => 'Backlog', 'assignees' => [$assignee->id],
         ])->assertRedirect();
-        $this->assertCount(4, $history);
-        $this->assertDatabaseMissing('push_subscriptions', ['user_id' => $assignee->id]);
+        $this->assertCount(9, $history);
     }
 
     public function test_push_test_requires_the_current_user_to_have_a_subscription(): void
@@ -105,6 +109,30 @@ class PushNotificationsTest extends TestCase
         $this->actingAs($user)->postJson(route('push-subscriptions.test'))
             ->assertUnprocessable()
             ->assertJsonPath('message', 'Aktifkan notifikasi di perangkat ini terlebih dahulu.');
+    }
+
+    public function test_comment_pushes_to_other_active_members(): void
+    {
+        $keys = VAPID::createVapidKeys();
+        config()->set('push.public_key', $keys['publicKey']);
+        config()->set('push.private_key', $keys['privateKey']);
+        config()->set('push.subject', 'https://task.example.test');
+        $author = User::factory()->create();
+        $recipient = User::factory()->create();
+        $history = [];
+        $handler = HandlerStack::create(new MockHandler([new Response(201)]));
+        $handler->push(Middleware::history($history));
+        $this->app->instance(TaskPushNotifier::class, new TaskPushNotifier(new Client(['handler' => $handler])));
+
+        foreach ([$author, $recipient] as $user) {
+            PushSubscription::create(['user_id' => $user->id, 'endpoint' => 'https://push.example.test/comment-'.$user->id, 'endpoint_hash' => hash('sha256', 'https://push.example.test/comment-'.$user->id), 'p256dh' => $keys['publicKey'], 'auth' => rtrim(strtr(base64_encode(random_bytes(16)), '+/', '-_'), '=')]);
+        }
+        $task = Task::create(['title' => 'Diskusi', 'created_by' => $author->id]);
+
+        $this->actingAs($author)->postJson(route('tasks.comments.store', $task), ['body' => 'Ada kabar'])->assertCreated();
+
+        $this->assertCount(1, $history);
+        $this->assertSame('https://push.example.test/comment-'.$recipient->id, (string) $history[0]['request']->getUri());
     }
 
     public function test_push_test_sends_only_to_the_current_users_devices(): void

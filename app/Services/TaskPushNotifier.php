@@ -21,15 +21,10 @@ class TaskPushNotifier
             return;
         }
 
-        $recipientIds = $task->assignees()->pluck('users.id')->push($task->created_by)->unique()->reject(fn ($id) => (int) $id === $actorId);
-        if ($recipientIds->isEmpty()) {
-            return;
-        }
-
         $subscriptions = PushSubscription::query()
             ->join('users', 'users.id', '=', 'push_subscriptions.user_id')
-            ->whereIn('push_subscriptions.user_id', $recipientIds)
             ->where('users.is_active', true)
+            ->where('push_subscriptions.user_id', '!=', $actorId)
             ->select('push_subscriptions.*')
             ->get();
         if ($subscriptions->isEmpty()) {
@@ -45,7 +40,11 @@ class TaskPushNotifier
             $sender->setReuseVAPIDHeaders(true);
 
             $payload = json_encode([
-                'title' => $action === 'created' ? 'Tugas baru' : 'Tugas diperbarui',
+                'title' => match ($action) {
+                    'created' => 'Tugas baru',
+                    'commented' => 'Komentar baru',
+                    default => 'Tugas diperbarui',
+                },
                 'body' => $task->title,
                 'url' => route('tasks', absolute: false).'?q='.rawurlencode($task->title),
                 'tag' => 'task-'.$task->id,

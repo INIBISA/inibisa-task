@@ -53,6 +53,23 @@
                                 </form>
                             @endif
                             <div class="grid grid-cols-2 gap-x-6 gap-y-4 border-y border-slate-100 py-4 text-sm"><div><p class="label">Produk</p><p class="font-semibold">{{ $task->product?->name ?? 'Tanpa produk' }}</p></div><div><p class="label">Tenggat</p><p class="font-semibold">{{ $task->due_date?->format('d M Y') ?? 'Belum ada' }}</p></div><div><p class="label">Ditugaskan ke</p><p class="font-semibold">{{ $task->assignees->pluck('name')->join(', ') ?: 'Belum ditugaskan' }}</p></div><div><p class="label">Status</p><p class="font-semibold">{{ $statusLabels[$task->status] ?? $task->status }}</p></div></div>
+                            <section class="space-y-3" aria-labelledby="comments-{{ $task->id }}">
+                                @php($commentTree = $task->comments->groupBy('parent_id'))
+                                <div class="flex items-center justify-between"><h3 id="comments-{{ $task->id }}" class="text-sm font-bold text-slate-800">Diskusi <span class="text-slate-400" data-comment-count>{{ $task->comments->count() }}</span></h3></div>
+                                <div class="max-h-80 space-y-3 overflow-y-auto pr-1" data-comment-list>
+                                    @forelse($commentTree->get('', $commentTree->get(null, collect())) as $comment)
+                                        @include('workspace.partials.comment', ['comment' => $comment, 'commentTree' => $commentTree])
+                                    @empty
+                                        <p class="task-comments-empty" data-comments-empty>Belum ada diskusi. Mulai percakapan.</p>
+                                    @endforelse
+                                </div>
+                                <form class="task-comment-form" data-comment-form data-comment-url="{{ route('tasks.comments.store', $task) }}" enctype="multipart/form-data">
+                                    <input type="hidden" name="parent_id" value="">
+                                    <label class="sr-only" for="comment-body-{{ $task->id }}">Tulis komentar</label>
+                                    <textarea id="comment-body-{{ $task->id }}" class="field min-h-20 w-full resize-y" name="body" maxlength="5000" placeholder="Tulis komentar untuk tim..." data-comment-body></textarea>
+                                    <div class="mt-2 flex items-center justify-between gap-3"><label class="action-button cursor-pointer"><i data-lucide="image-plus"></i> Gambar<input class="sr-only" type="file" name="images[]" accept="image/jpeg,image/png,image/webp,image/gif" multiple data-comment-images></label><button class="brand-button min-h-9 px-3" type="submit"><i data-lucide="send" class="h-4 w-4"></i> Kirim</button></div><div class="task-comment-previews" data-comment-previews></div><p class="text-xs text-rose-600" data-comment-error aria-live="polite"></p>
+                                </form>
+                            </section>
                             @if(auth()->user()->role === 'admin' || $task->created_by === auth()->id())
                                 <details><summary class="action-button cursor-pointer list-none"><i data-lucide="pencil"></i> Edit tugas</summary>
                                     <form method="POST" action="{{ route('tasks.update', $task) }}" class="mt-4 space-y-3" data-confirm-title="Simpan perubahan tugas?">@csrf @method('PUT')

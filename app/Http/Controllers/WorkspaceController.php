@@ -38,8 +38,7 @@ class WorkspaceController extends Controller
 
     public function tasks(Request $request)
     {
-        $query = Task::with(['product', 'milestone', 'assignees', 'subtasks'])->latest();
-        $this->visibleTasks($query, $request);
+        $query = Task::with(['product', 'milestone', 'assignees', 'subtasks', 'comments' => fn ($comments) => $comments->with(['user', 'attachments'])->oldest()])->latest();
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
@@ -68,7 +67,6 @@ class WorkspaceController extends Controller
 
     public function updateTask(Request $request, Task $task, TaskPushNotifier $pushNotifier)
     {
-        $this->canEditTask($request, $task);
         $data = $request->validate(['title' => 'sometimes|required|string|max:255', 'description' => 'nullable|string', 'product_id' => 'nullable|exists:products,id', 'milestone_id' => 'nullable|exists:milestones,id', 'priority' => 'sometimes|required|in:urgent,high,normal,low', 'status' => 'sometimes|required|in:Backlog,Planned,In Progress,Review,Done', 'position' => 'nullable|integer|min:0', 'due_date' => 'nullable|date', 'is_blocked' => 'nullable|boolean', 'blocked_reason' => 'nullable|string', 'assignees' => 'array', 'assignees.*' => 'exists:users,id']);
         $task->update($data);
         $assigneesChanged = false;
@@ -94,7 +92,6 @@ class WorkspaceController extends Controller
 
     public function subtask(Request $request, Task $task, TaskPushNotifier $pushNotifier)
     {
-        $this->canEditTask($request, $task);
         $data = $request->validate(['title' => 'required|string|max:255']);
         $task->subtasks()->create($data);
         $pushNotifier->send($task, $request->user()->id, 'updated');
@@ -105,7 +102,6 @@ class WorkspaceController extends Controller
     public function toggleSubtask(Request $request, Subtask $subtask, TaskPushNotifier $pushNotifier)
     {
         $task = $subtask->task;
-        $this->canEditTask($request, $task);
         $subtask->update(['is_completed' => ! $subtask->is_completed]);
         $pushNotifier->send($task, $request->user()->id, 'updated');
 
@@ -353,11 +349,6 @@ class WorkspaceController extends Controller
         abort_unless($request->user()->role === 'admin', 403);
     }
 
-    private function canEditTask(Request $request, Task $task): void
-    {
-        abort_unless($request->user()->role === 'admin' || $task->created_by === $request->user()->id, 403);
-    }
-
     private function visibleTasks($query, Request $request): void
     {
         if ($request->user()->role === 'admin') {
@@ -366,4 +357,5 @@ class WorkspaceController extends Controller
         $userId = $request->user()->id;
         $query->where(fn ($tasks) => $tasks->where('created_by', $userId)->orWhereHas('assignees', fn ($users) => $users->whereKey($userId)));
     }
+
 }
