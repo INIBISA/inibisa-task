@@ -6,6 +6,8 @@
 [hidden] { display: none !important; }
 .guest-shell { min-height: 100dvh; }
 .page-loading { position: fixed; inset: 0 0 auto; z-index: 100; height: 3px; transform: scaleX(0); transform-origin: left; background: linear-gradient(90deg, #0dd7e8, #1455f4, #ed2bd9); transition: transform 180ms ease; }
+/* We use our own delayed top bar for SPA-like visits; hide Turbo's native bar to avoid a double indicator. */
+.turbo-progress-bar { display: none !important; }
 .page-loading.is-loading { transform: scaleX(.82); animation: page-loading 1.1s ease-in-out infinite; }
 .is-loading { cursor: wait !important; }
 .is-loading > :not(.loading-spinner) { opacity: .65; }

@@ -19,7 +19,14 @@ Alpine.store('theme', {
     },
 });
 
+// Persistent mobile sheet state so [data-turbo-permanent] nav keeps working across visits.
+Alpine.store('nav', { moreOpen: false });
+
 Alpine.start();
+
+// Keep visits feeling instant: hide Turbo's native bar (we use our own delayed bar)
+// and rely on prefetch for nav links.
+Turbo.setProgressBarDelay(400);
 
 const lucideIcons = { Archive, ArrowRight, AtSign, Bell, BriefcaseBusiness, CalendarDays, Camera, CircleCheck, Download, Funnel, House, ImagePlus, Inbox, Layers3, Lightbulb, ListTodo, Menu, Music2, Package, Pencil, Plus, Reply, Search, Send, Settings2, ThumbsUp, Trash2, UserRound, UsersRound, UserX, Video, Volume2, VolumeX };
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
@@ -244,13 +251,77 @@ document.addEventListener('submit', (event) => {
     pageLoading(true);
 });
 
-document.addEventListener('click', (event) => {
-    const link = event.target.closest('a[href]');
-    if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || link.target || link.hasAttribute('download')) return;
-    const url = new URL(link.href, location.href);
-    if (url.origin === location.origin && url.href !== location.href) pageLoading(true);
+// SPA-like navigation: header + bottom nav are [data-turbo-permanent], so only
+// <main> swaps. Show the top loading bar only when a visit is actually slow
+// (prefetched visits resolve from cache and never flash the bar).
+let pageLoadingTimer = null;
+const schedulePageLoading = () => {
+    if (pageLoadingTimer || document.querySelector('[data-page-loading]')?.classList.contains('is-loading')) return;
+    pageLoadingTimer = window.setTimeout(() => {
+        pageLoadingTimer = null;
+        pageLoading(true);
+    }, 250);
+};
+const clearPageLoading = () => {
+    if (pageLoadingTimer) {
+        window.clearTimeout(pageLoadingTimer);
+        pageLoadingTimer = null;
+    }
+    pageLoading(false);
+};
+
+const closeOverlaysForVisit = () => {
+    try {
+        window.Alpine?.store('nav') && (window.Alpine.store('nav').moreOpen = false);
+    } catch { /* store not ready yet */ }
+    window.dispatchEvent(new CustomEvent('close-account-menu'));
+};
+
+const NAV_KEY_BY_PATH = [
+    [/^\/tasks/, 'tasks'],
+    [/^\/products/, 'products'],
+    [/^\/ideas/, 'ideas'],
+    [/^\/audiences/, 'audiences'],
+    [/^\/social-media-accounts/, 'social-media-accounts'],
+    [/^\/team/, 'team'],
+    [/^\/profile/, 'profile'],
+    [/^\/dashboard/, 'dashboard'],
+    [/^\/$/, 'dashboard'],
+];
+
+// Permanent nav keeps its DOM across Turbo visits, so the server-rendered
+// active class would go stale. Sync it client-side on every render.
+const updateNavActive = () => {
+    const found = NAV_KEY_BY_PATH.find(([re]) => re.test(location.pathname));
+    const key = found ? found[1] : null;
+    if (!key) return;
+    document.querySelectorAll('[data-nav-key]').forEach((el) => {
+        const active = el.dataset.navKey === key;
+        el.classList.toggle('top-nav-active', active && el.classList.contains('top-nav'));
+        el.classList.toggle('mobile-nav-active', active && el.classList.contains('mobile-nav'));
+        if (el.classList.contains('mobile-nav')) {
+            active ? el.setAttribute('aria-current', 'page') : el.removeAttribute('aria-current');
+        }
+    });
+    document.querySelectorAll('[data-nav-group]').forEach((el) => {
+        const active = (el.dataset.navGroup || '').split(/\s+/).includes(key);
+        el.classList.toggle('mobile-nav-active', active);
+        el.classList.toggle('top-nav-active', active && el.classList.contains('top-nav'));
+    });
+};
+
+document.addEventListener('turbo:visit', () => {
+    closeOverlaysForVisit();
+    schedulePageLoading();
 });
-window.addEventListener('pageshow', () => pageLoading(false));
+document.addEventListener('turbo:before-fetch-request', schedulePageLoading);
+document.addEventListener('turbo:render', () => {
+    updateNavActive();
+    createIcons({ icons: lucideIcons, attrs: { 'stroke-width': 1.8 } });
+});
+document.addEventListener('turbo:load', updateNavActive);
+document.addEventListener('turbo:visit-failed', clearPageLoading);
+window.addEventListener('pageshow', clearPageLoading);
 
 const showFlash = () => {
     const flash = document.getElementById('workspace-flash');
@@ -400,7 +471,8 @@ const initTaskBoard = () => {
 };
 
 const initPage = () => {
-    pageLoading(false);
+    clearPageLoading();
+    updateNavActive();
     createIcons({ icons: lucideIcons, attrs: { 'stroke-width': 1.8 } });
     initPushNotifications(Swal);
     initTaskBoard();
@@ -408,3 +480,4 @@ const initPage = () => {
 };
 
 document.addEventListener('turbo:load', initPage);
+document.addEventListener('DOMContentLoaded', updateNavActive);

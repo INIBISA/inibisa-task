@@ -12,30 +12,30 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body class="min-h-screen bg-[#f6fbff] text-slate-800" x-data="{ moreOpen: false }" @keydown.escape.window="moreOpen = false">
+<body class="min-h-screen bg-[#f6fbff] text-slate-800" @keydown.escape.window="$store.nav.moreOpen = false">
     <div class="page-loading" data-page-loading role="status" aria-live="polite"><span class="sr-only">Memuat halaman...</span></div>
-    <header class="workspace-header sticky top-0 z-20 border-b border-cyan-100 bg-white/95 backdrop-blur">
+    <header id="workspace-header" data-turbo-permanent class="workspace-header sticky top-0 z-20 border-b border-cyan-100 bg-white/95 backdrop-blur">
         <div class="grid h-16 grid-cols-[1fr_auto] items-center gap-3 px-4 sm:px-5 lg:grid-cols-[1fr_auto_1fr] xl:px-9">
-            <a href="{{ route('dashboard') }}" class="flex shrink-0 items-center gap-2"><x-application-logo
+            <a href="{{ route('dashboard') }}" data-turbo-prefetch class="flex shrink-0 items-center gap-2"><x-application-logo
                     class="h-11 w-11 rounded-xl object-contain" /><span
                     class="text-base font-black tracking-tight text-blue-950 sm:text-lg">IniBisa</span></a>
-            <nav class="hidden items-center justify-center gap-1 lg:flex">
-                <a class="top-nav {{ request()->routeIs('dashboard') ? 'top-nav-active' : '' }}"
+            <nav class="hidden items-center justify-center gap-1 lg:flex" data-top-nav>
+                <a data-nav-key="dashboard" data-turbo-prefetch class="top-nav {{ request()->routeIs('dashboard') ? 'top-nav-active' : '' }}"
                     href="{{ route('dashboard') }}">Dasbor</a>
-                <a class="top-nav {{ request()->routeIs('tasks*') ? 'top-nav-active' : '' }}"
+                <a data-nav-key="tasks" data-turbo-prefetch class="top-nav {{ request()->routeIs('tasks*') ? 'top-nav-active' : '' }}"
                     href="{{ route('tasks') }}">Tugas</a>
-                <a class="top-nav {{ request()->routeIs('products*') ? 'top-nav-active' : '' }}"
+                <a data-nav-key="products" data-turbo-prefetch class="top-nav {{ request()->routeIs('products*') ? 'top-nav-active' : '' }}"
                     href="{{ route('products') }}">Produk</a>
-                <a class="top-nav {{ request()->routeIs('ideas*') ? 'top-nav-active' : '' }}"
+                <a data-nav-key="ideas" data-turbo-prefetch class="top-nav {{ request()->routeIs('ideas*') ? 'top-nav-active' : '' }}"
                     href="{{ route('ideas') }}">Ide</a>
-                <a class="top-nav {{ request()->routeIs('audiences*') ? 'top-nav-active' : '' }}"
+                <a data-nav-key="audiences" data-turbo-prefetch class="top-nav {{ request()->routeIs('audiences*') ? 'top-nav-active' : '' }}"
                     href="{{ route('audiences') }}">Audiens</a>
-                <a class="top-nav {{ request()->routeIs('social-media-accounts*') ? 'top-nav-active' : '' }}"
+                <a data-nav-key="social-media-accounts" data-turbo-prefetch class="top-nav {{ request()->routeIs('social-media-accounts*') ? 'top-nav-active' : '' }}"
                     href="{{ route('social-media-accounts') }}">Sosial Media</a>
-                <a class="top-nav {{ request()->routeIs('team') ? 'top-nav-active' : '' }}"
+                <a data-nav-key="team" data-turbo-prefetch class="top-nav {{ request()->routeIs('team') ? 'top-nav-active' : '' }}"
                     href="{{ route('team') }}">Tim</a>
             </nav>
-            <div class="flex items-center justify-end gap-2" x-data="{ open: false }">
+            <div class="flex items-center justify-end gap-2" x-data="{ open: false }" @close-account-menu.window="open = false">
                 <button type="button" data-install-app hidden class="desktop-install-button hidden lg:inline-flex" aria-label="Pasang aplikasi" title="Pasang IniBisa"><i data-lucide="download" class="h-5 w-5"></i><span class="hidden xl:inline">Pasang aplikasi</span></button>
                 <button type="button" @click="$store.theme.toggle()" class="theme-toggle" :aria-label="$store.theme.dark ? 'Aktifkan mode terang' : 'Aktifkan mode gelap'" :title="$store.theme.dark ? 'Mode terang' : 'Mode gelap'">
                     <span class="theme-toggle-sun" aria-hidden="true">
@@ -55,7 +55,7 @@
                     <span class="hidden sm:block"><span class="block text-sm font-bold leading-4">{{ auth()->user()->name }}</span><span class="block text-xs text-slate-400">{{ auth()->user()->position ?: auth()->user()->role }}</span></span><span class="hidden text-xs text-slate-400 sm:inline">⌄</span>
                 </button>
                 <div x-cloak x-show="open" x-transition class="absolute right-5 top-14 z-30 w-56 rounded-2xl border border-cyan-100 bg-white p-2 shadow-xl xl:right-9">
-                    <a href="{{ route('profile.edit') }}" class="account-menu">Pengaturan akun</a>
+                    <a href="{{ route('profile.edit') }}" data-turbo-prefetch class="account-menu">Pengaturan akun</a>
                     <button type="button" data-push-toggle class="account-menu w-full">Aktifkan notifikasi</button>
                     <div class="my-1 border-t border-slate-100"></div>
                     <form method="POST" action="{{ route('logout') }}">@csrf<button class="account-menu w-full text-rose-600 hover:bg-rose-50">Keluar</button></form>
@@ -82,24 +82,24 @@
         </div>
         <div class="mt-4 flex gap-2"><button type="button" data-install-offer-action class="brand-button min-h-11 flex-1">Pasang aplikasi</button><button type="button" data-install-offer-close class="action-button min-h-11 px-4">Nanti</button></div>
     </aside>
-    <div x-cloak x-show="moreOpen" x-transition.opacity class="fixed inset-0 z-30 bg-slate-950/40 lg:hidden" @click="moreOpen = false"></div>
-    <section x-cloak x-show="moreOpen" x-transition:enter="transition duration-200 ease-out" x-transition:enter-start="translate-y-full" x-transition:enter-end="translate-y-0" x-transition:leave="transition duration-150 ease-in" x-transition:leave-start="translate-y-0" x-transition:leave-end="translate-y-full" class="mobile-more-sheet fixed inset-x-0 bottom-0 z-40 rounded-t-3xl bg-white p-4 shadow-2xl lg:hidden" aria-label="Menu lainnya">
-        <div class="mb-4 flex items-center justify-between"><h2 class="text-lg font-black">Menu lainnya</h2><button type="button" @click="moreOpen = false" class="grid h-11 w-11 place-items-center rounded-xl bg-slate-100" aria-label="Tutup menu">×</button></div>
+    <div id="mobile-more-backdrop" data-turbo-permanent x-cloak x-show="$store.nav.moreOpen" x-transition.opacity class="fixed inset-0 z-30 bg-slate-950/40 lg:hidden" @click="$store.nav.moreOpen = false"></div>
+    <section id="mobile-more-sheet" data-turbo-permanent x-cloak x-show="$store.nav.moreOpen" x-transition:enter="transition duration-200 ease-out" x-transition:enter-start="translate-y-full" x-transition:enter-end="translate-y-0" x-transition:leave="transition duration-150 ease-in" x-transition:leave-start="translate-y-0" x-transition:leave-end="translate-y-full" class="mobile-more-sheet fixed inset-x-0 bottom-0 z-40 rounded-t-3xl bg-white p-4 shadow-2xl lg:hidden" aria-label="Menu lainnya">
+        <div class="mb-4 flex items-center justify-between"><h2 class="text-lg font-black">Menu lainnya</h2><button type="button" @click="$store.nav.moreOpen = false" class="grid h-11 w-11 place-items-center rounded-xl bg-slate-100" aria-label="Tutup menu">×</button></div>
         <div class="grid grid-cols-2 gap-2">
-            <a class="mobile-more-link" href="{{ route('audiences') }}"><i data-lucide="users-round"></i>Audiens</a>
-            <a class="mobile-more-link" href="{{ route('social-media-accounts') }}"><i data-lucide="at-sign"></i>Sosial Media</a>
-            <a class="mobile-more-link" href="{{ route('team') }}"><i data-lucide="user-round"></i>Tim</a>
-            <a class="mobile-more-link" href="{{ route('profile.edit') }}"><i data-lucide="settings-2"></i>Akun saya</a>
+            <a data-nav-key="audiences" data-turbo-prefetch class="mobile-more-link" href="{{ route('audiences') }}"><i data-lucide="users-round"></i>Audiens</a>
+            <a data-nav-key="social-media-accounts" data-turbo-prefetch class="mobile-more-link" href="{{ route('social-media-accounts') }}"><i data-lucide="at-sign"></i>Sosial Media</a>
+            <a data-nav-key="team" data-turbo-prefetch class="mobile-more-link" href="{{ route('team') }}"><i data-lucide="user-round"></i>Tim</a>
+            <a data-nav-key="profile" data-turbo-prefetch class="mobile-more-link" href="{{ route('profile.edit') }}"><i data-lucide="settings-2"></i>Akun saya</a>
         </div>
         <button type="button" data-push-toggle class="mobile-install-button mt-3"><i data-lucide="bell"></i><span>Aktifkan notifikasi<span class="block text-xs font-medium opacity-80">Info tugas baru dan perubahan tugas</span></span></button>
         <button type="button" data-install-app hidden class="mobile-install-button mt-3"><i data-lucide="download"></i><span>Pasang IniBisa<span class="block text-xs font-medium opacity-80">Buka langsung dari layar utama</span></span></button>
     </section>
-    <nav class="mobile-bottom-nav fixed z-20 grid grid-cols-5 gap-1 rounded-[1.4rem] border border-slate-200 bg-white/95 p-1.5 shadow-xl shadow-slate-900/10 backdrop-blur lg:hidden" aria-label="Navigasi utama">
-        <a class="mobile-nav {{ request()->routeIs('dashboard') ? 'mobile-nav-active' : '' }}" href="{{ route('dashboard') }}" @if(request()->routeIs('dashboard')) aria-current="page" @endif><span class="mobile-nav-icon"><i data-lucide="house"></i></span><span class="mobile-nav-label">Beranda</span></a>
-        <a class="mobile-nav {{ request()->routeIs('tasks*') ? 'mobile-nav-active' : '' }}" href="{{ route('tasks') }}" @if(request()->routeIs('tasks*')) aria-current="page" @endif><span class="mobile-nav-icon"><i data-lucide="list-todo"></i></span><span class="mobile-nav-label">Tugas</span></a>
-        <a class="mobile-nav {{ request()->routeIs('products*') ? 'mobile-nav-active' : '' }}" href="{{ route('products') }}" @if(request()->routeIs('products*')) aria-current="page" @endif><span class="mobile-nav-icon"><i data-lucide="package"></i></span><span class="mobile-nav-label">Produk</span></a>
-        <a class="mobile-nav {{ request()->routeIs('ideas*') ? 'mobile-nav-active' : '' }}" href="{{ route('ideas') }}" @if(request()->routeIs('ideas*')) aria-current="page" @endif><span class="mobile-nav-icon"><i data-lucide="lightbulb"></i></span><span class="mobile-nav-label">Ide</span></a>
-        <button type="button" class="mobile-nav {{ request()->routeIs('audiences*', 'social-media-accounts*', 'team', 'profile.*') ? 'mobile-nav-active' : '' }}" @click="moreOpen = true" :aria-expanded="moreOpen.toString()" aria-label="Buka menu lainnya"><span class="mobile-nav-icon"><i data-lucide="menu"></i></span><span class="mobile-nav-label">Lainnya</span></button>
+    <nav id="mobile-bottom-nav" data-turbo-permanent class="mobile-bottom-nav fixed z-20 grid grid-cols-5 gap-1 rounded-[1.4rem] border border-slate-200 bg-white/95 p-1.5 shadow-xl shadow-slate-900/10 backdrop-blur lg:hidden" aria-label="Navigasi utama" data-bottom-nav>
+        <a data-nav-key="dashboard" data-turbo-prefetch class="mobile-nav {{ request()->routeIs('dashboard') ? 'mobile-nav-active' : '' }}" href="{{ route('dashboard') }}" @if(request()->routeIs('dashboard')) aria-current="page" @endif><span class="mobile-nav-icon"><i data-lucide="house"></i></span><span class="mobile-nav-label">Beranda</span></a>
+        <a data-nav-key="tasks" data-turbo-prefetch class="mobile-nav {{ request()->routeIs('tasks*') ? 'mobile-nav-active' : '' }}" href="{{ route('tasks') }}" @if(request()->routeIs('tasks*')) aria-current="page" @endif><span class="mobile-nav-icon"><i data-lucide="list-todo"></i></span><span class="mobile-nav-label">Tugas</span></a>
+        <a data-nav-key="products" data-turbo-prefetch class="mobile-nav {{ request()->routeIs('products*') ? 'mobile-nav-active' : '' }}" href="{{ route('products') }}" @if(request()->routeIs('products*')) aria-current="page" @endif><span class="mobile-nav-icon"><i data-lucide="package"></i></span><span class="mobile-nav-label">Produk</span></a>
+        <a data-nav-key="ideas" data-turbo-prefetch class="mobile-nav {{ request()->routeIs('ideas*') ? 'mobile-nav-active' : '' }}" href="{{ route('ideas') }}" @if(request()->routeIs('ideas*')) aria-current="page" @endif><span class="mobile-nav-icon"><i data-lucide="lightbulb"></i></span><span class="mobile-nav-label">Ide</span></a>
+        <button type="button" data-nav-group="audiences social-media-accounts team profile" class="mobile-nav {{ request()->routeIs('audiences*', 'social-media-accounts*', 'team', 'profile.*') ? 'mobile-nav-active' : '' }}" @click="$store.nav.moreOpen = true" :aria-expanded="$store.nav.moreOpen.toString()" aria-label="Buka menu lainnya"><span class="mobile-nav-icon"><i data-lucide="menu"></i></span><span class="mobile-nav-label">Lainnya</span></button>
     </nav>
 </body>
 
